@@ -6,6 +6,9 @@ import Navbar from '@/components/layout/Navbar';
 import LoginPage from '@/features/auth/LoginPage';
 import RegisterPage from '@/features/auth/RegisterPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
+import RoutineListPage from '@/features/routines/RoutineListPage';
+import RoutineEditorPage from '@/features/routines/RoutineEditorPage';
+import RoutineRunnerPage from '@/features/routines/RoutineRunnerPage';
 
 function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuthStore();
@@ -77,6 +80,38 @@ export default function App() {
               <GuestRoute>
                 <RegisterPage />
               </GuestRoute>
+            }
+          />
+          <Route
+            path="/routines"
+            element={
+              <ProtectedRoute>
+                <RoutineListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/routines/new"
+            element={
+              <ProtectedRoute>
+                <RoutineEditorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/routines/:id/edit"
+            element={
+              <ProtectedRoute>
+                <RoutineEditorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/routines/:id/run"
+            element={
+              <ProtectedRoute>
+                <RoutineRunnerPage />
+              </ProtectedRoute>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />

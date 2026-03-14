@@ -1,17 +1,38 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { useRoutineStore } from '@/stores/routineStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
-import { Flame, Trophy, TrendingUp, Zap } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import RoutineCard from '@/features/routines/RoutineCard';
+import { Flame, Trophy, TrendingUp, Zap, Plus } from 'lucide-react';
 import { xpForLevel } from '../../../../shared/constants.js';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions, deleteRoutine } = useRoutineStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchRoutines();
+    fetchTodayCompletions();
+  }, [fetchRoutines, fetchTodayCompletions]);
 
   const currentLevelXp = xpForLevel(user.level);
   const nextLevelXp = xpForLevel(user.level + 1);
   const progressXp = user.totalXp - currentLevelXp;
   const neededXp = nextLevelXp - currentLevelXp;
   const progressPct = neededXp > 0 ? Math.min((progressXp / neededXp) * 100, 100) : 100;
+
+  // Only show today's scheduled routines
+  const dayOfWeek = new Date().getDay();
+  const todaysRoutines = routines.filter(
+    (r) => r.isActive && r.daysOfWeek.includes(dayOfWeek)
+  );
+
+  const getCompletion = (routineId) =>
+    todayCompletions.find((c) => c.routineId === routineId);
 
   return (
     <PageWrapper className="max-w-6xl mx-auto px-4 py-8">
@@ -83,13 +104,37 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      {/* Placeholder for today's routines */}
-      <Card>
-        <h2 className="font-display text-xl text-gray-900 dark:text-white mb-4">Today&apos;s Routines</h2>
-        <p className="text-gray-500 text-center py-8">
-          Routine cards will appear here in Phase 2. Your foundation is ready!
-        </p>
-      </Card>
+      {/* Today's Routines */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl text-gray-900 dark:text-white">Today&apos;s Routines</h2>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/routines')}>
+          View All
+        </Button>
+      </div>
+
+      {todaysRoutines.length === 0 ? (
+        <Card className="text-center py-8">
+          <p className="text-gray-500 mb-4">No routines scheduled for today.</p>
+          <Button size="sm" onClick={() => navigate('/routines')}>
+            <Plus className="w-4 h-4 mr-1" /> Add a Routine
+          </Button>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {todaysRoutines.map((routine) => (
+            <RoutineCard
+              key={routine.id}
+              routine={routine}
+              completion={getCompletion(routine.id)}
+              onStart={(r) => navigate(`/routines/${r.id}/run`)}
+              onEdit={(r) => navigate(`/routines/${r.id}/edit`)}
+              onDelete={(r) => {
+                if (window.confirm(`Delete "${r.name}"?`)) deleteRoutine(r.id);
+              }}
+            />
+          ))}
+        </div>
+      )}
     </PageWrapper>
   );
 }
