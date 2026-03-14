@@ -1,21 +1,68 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
 
-export const useAuthStore = create((set) => ({
+const GUEST_KEY = 'rf_guest_user';
+
+const DEFAULT_GUEST = {
+  id: 'guest',
+  username: 'Guest',
+  email: null,
+  level: 1,
+  totalXp: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  streakFreezes: 2,
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+};
+
+export const useAuthStore = create((set, get) => ({
   user: null,
+  isGuest: false,
   isLoading: true,
   error: null,
 
   /**
-   * Check if user is already authenticated (on app load)
+   * Check if user is already authenticated (on app load).
+   * Tries server auth first, then falls back to guest session in localStorage.
    */
   checkAuth: async () => {
     try {
       const { data } = await api.get('/auth/me');
-      set({ user: data.user, isLoading: false, error: null });
+      set({ user: data.user, isGuest: false, isLoading: false, error: null });
     } catch {
-      set({ user: null, isLoading: false, error: null });
+      // Check for guest session
+      const stored = localStorage.getItem(GUEST_KEY);
+      if (stored) {
+        try {
+          const guestUser = JSON.parse(stored);
+          set({ user: guestUser, isGuest: true, isLoading: false, error: null });
+          return;
+        } catch {
+          localStorage.removeItem(GUEST_KEY);
+        }
+      }
+      set({ user: null, isGuest: false, isLoading: false, error: null });
     }
+  },
+
+  /**
+   * Continue as guest — stores user data in localStorage
+   */
+  loginAsGuest: () => {
+    const guestUser = { ...DEFAULT_GUEST };
+    localStorage.setItem(GUEST_KEY, JSON.stringify(guestUser));
+    set({ user: guestUser, isGuest: true, isLoading: false, error: null });
+  },
+
+  /**
+   * Update guest user data in localStorage (for XP, level, streak changes)
+   */
+  updateGuestUser: (updates) => {
+    const current = get().user;
+    if (!get().isGuest || !current) return;
+    const updated = { ...current, ...updates };
+    localStorage.setItem(GUEST_KEY, JSON.stringify(updated));
+    set({ user: updated });
   },
 
   /**
@@ -25,7 +72,9 @@ export const useAuthStore = create((set) => ({
     set({ error: null });
     try {
       const { data } = await api.post('/auth/register', { email, username, password });
-      set({ user: data.user, error: null });
+      // Clear guest data on successful registration
+      localStorage.removeItem(GUEST_KEY);
+      set({ user: data.user, isGuest: false, error: null });
       return data.user;
     } catch (err) {
       set({ error: err.message });
@@ -40,7 +89,8 @@ export const useAuthStore = create((set) => ({
     set({ error: null });
     try {
       const { data } = await api.post('/auth/login', { email, password });
-      set({ user: data.user, error: null });
+      localStorage.removeItem(GUEST_KEY);
+      set({ user: data.user, isGuest: false, error: null });
       return data.user;
     } catch (err) {
       set({ error: err.message });
@@ -52,10 +102,16 @@ export const useAuthStore = create((set) => ({
    * Logout the current user
    */
   logout: async () => {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      set({ user: null, error: null });
+    const wasGuest = get().isGuest;
+    if (wasGuest) {
+      localStorage.removeItem(GUEST_KEY);
+      set({ user: null, isGuest: false, error: null });
+    } else {
+      try {
+        await api.post('/auth/logout');
+      } finally {
+        set({ user: null, isGuest: false, error: null });
+      }
     }
   },
 

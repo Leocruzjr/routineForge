@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+
+function isGuest() {
+  return useAuthStore.getState().isGuest;
+}
 
 export const useGamificationStore = create((set) => ({
   badges: [],
@@ -9,6 +14,10 @@ export const useGamificationStore = create((set) => ({
   isLoading: false,
 
   fetchBadges: async () => {
+    if (isGuest()) {
+      set({ badges: [], isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     try {
       const { data } = await api.get('/gamification/badges');
@@ -19,6 +28,10 @@ export const useGamificationStore = create((set) => ({
   },
 
   fetchRewards: async () => {
+    if (isGuest()) {
+      set({ rewards: [], availableXp: 0, isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     try {
       const { data } = await api.get('/gamification/rewards');
@@ -29,8 +42,8 @@ export const useGamificationStore = create((set) => ({
   },
 
   redeemReward: async (rewardId) => {
+    if (isGuest()) return;
     const { data } = await api.post(`/gamification/rewards/${rewardId}/redeem`);
-    // Re-fetch to update owned status and XP
     set((state) => ({
       availableXp: data.remainingXp,
       rewards: state.rewards.map((r) =>
@@ -41,6 +54,10 @@ export const useGamificationStore = create((set) => ({
   },
 
   fetchStats: async () => {
+    if (isGuest()) {
+      set({ stats: { heatmap: [], totalCompleted: 0, avgCompletionPct: 0, weeklyXp: [] } });
+      return;
+    }
     try {
       const { data } = await api.get('/gamification/stats');
       set({ stats: data });

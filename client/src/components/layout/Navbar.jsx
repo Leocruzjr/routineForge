@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { Flame, LogOut, Home, ListChecks, Award, ShoppingBag, BarChart3, Settings } from 'lucide-react';
+import { Flame, LogOut, Home, ListChecks, Award, ShoppingBag, BarChart3, Settings, UserPlus } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 const navLinks = [
@@ -12,11 +12,21 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const { user, logout } = useAuthStore();
+  const { user, isGuest, logout } = useAuthStore();
   const location = useLocation();
 
   return (
     <>
+      {/* Guest banner */}
+      {user && isGuest && (
+        <div className="bg-primary-500 text-white text-center py-2 px-4 text-sm">
+          <Link to="/register" className="inline-flex items-center gap-1.5 font-medium hover:underline">
+            <UserPlus className="w-3.5 h-3.5" />
+            Sign up to save your data and sync across devices
+          </Link>
+        </div>
+      )}
+
       {/* Top navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -55,7 +65,7 @@ export default function Navbar() {
                   Lv.{user.level}
                 </span>
                 <span className="text-sm text-gray-500">
-                  {user.username}
+                  {isGuest ? 'Guest' : user.username}
                 </span>
               </div>
               <Link to="/settings" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
