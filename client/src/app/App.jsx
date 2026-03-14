@@ -9,6 +9,8 @@ import DashboardPage from '@/features/dashboard/DashboardPage';
 import RoutineListPage from '@/features/routines/RoutineListPage';
 import RoutineEditorPage from '@/features/routines/RoutineEditorPage';
 import RoutineRunnerPage from '@/features/routines/RoutineRunnerPage';
+import BadgesPage from '@/features/gamification/BadgesPage';
+import RewardsShopPage from '@/features/gamification/RewardsShopPage';
 
 function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuthStore();
@@ -111,6 +113,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <RoutineRunnerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/badges"
+            element={
+              <ProtectedRoute>
+                <BadgesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop"
+            element={
+              <ProtectedRoute>
+                <RewardsShopPage />
               </ProtectedRoute>
             }
           />

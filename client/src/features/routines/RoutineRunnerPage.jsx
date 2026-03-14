@@ -159,7 +159,7 @@ export default function RoutineRunnerPage() {
 
   // --- Celebration Screen ---
   if (result) {
-    const { xpBreakdown, leveledUp, newLevel, newTotalXp } = result;
+    const { xpBreakdown, leveledUp, newLevel, newTotalXp, streak, newBadges } = result;
     return (
       <PageWrapper className="max-w-lg mx-auto px-4 py-12 text-center">
         <motion.div
@@ -222,6 +222,47 @@ export default function RoutineRunnerPage() {
               </div>
             </div>
           </Card>
+
+          {/* Streak update */}
+          {streak && streak.currentStreak > 0 && (
+            <Card className="text-center mb-6">
+              <div className="flex items-center justify-center gap-2">
+                <Flame className="w-6 h-6 text-accent-500" />
+                <span className="text-2xl font-mono font-bold text-gray-900 dark:text-white">
+                  {streak.currentStreak} day streak
+                </span>
+              </div>
+            </Card>
+          )}
+
+          {/* Newly earned badges */}
+          {newBadges && newBadges.length > 0 && (
+            <Card className="mb-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-primary-500" /> Badges Earned!
+              </h3>
+              <div className="space-y-3">
+                {newBadges.map((badge, i) => (
+                  <motion.div
+                    key={badge.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 + i * 0.2 }}
+                    className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-5 h-5 text-primary-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white">{badge.name}</p>
+                      <p className="text-xs text-gray-500">{badge.description}</p>
+                    </div>
+                    <span className="text-xs font-mono text-primary-500 ml-auto">+{badge.xpReward} XP</span>
+                  </motion.div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <div className="flex gap-3">
             <Button className="flex-1" onClick={() => navigate('/')}>
