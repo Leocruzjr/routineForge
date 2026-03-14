@@ -7,6 +7,7 @@ import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Check, SkipForward, Clock, Info, ArrowLeft, Zap, Trophy, Flame } from 'lucide-react';
+import { getBadgeIcon } from '@/lib/badgeIcons';
 
 export default function RoutineRunnerPage() {
   const { id } = useParams();
@@ -242,7 +243,9 @@ export default function RoutineRunnerPage() {
                 <Trophy className="w-5 h-5 text-primary-500" /> Badges Earned!
               </h3>
               <div className="space-y-3">
-                {newBadges.map((badge, i) => (
+                {newBadges.map((badge, i) => {
+                  const BadgeIcon = getBadgeIcon(badge.icon);
+                  return (
                   <motion.div
                     key={badge.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -251,7 +254,7 @@ export default function RoutineRunnerPage() {
                     className="flex items-center gap-3 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-xl"
                   >
                     <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
-                      <Trophy className="w-5 h-5 text-primary-500" />
+                      <BadgeIcon className="w-5 h-5 text-primary-500" />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-sm text-gray-900 dark:text-white">{badge.name}</p>
@@ -259,7 +262,8 @@ export default function RoutineRunnerPage() {
                     </div>
                     <span className="text-xs font-mono text-primary-500 ml-auto">+{badge.xpReward} XP</span>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
