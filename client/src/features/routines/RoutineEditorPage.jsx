@@ -9,7 +9,47 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { Plus, GripVertical, Trash2, ArrowLeft, Info } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { ROUTINE_TYPES, DIFFICULTY_TIERS } from '../../../../shared/constants.js';
+
+function SortableStep({ step, index, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: step.id || step._tempId,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
+    >
+      <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
+        <GripVertical className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      </button>
+      <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+        {index + 1}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{step.title}</p>
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          {step.durationMinutes && <span>{step.durationMinutes} min</span>}
+          {step.isOptional && <span className="text-primary-500">Optional</span>}
+        </div>
+      </div>
+      <button type="button" onClick={onRemove} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">
+        <Trash2 className="w-4 h-4 text-red-400" />
+      </button>
+    </div>
+  );
+}
 
 const routineSchema = yup.object({
   name: yup.string().min(1).max(100).required('Name is required'),
@@ -23,7 +63,8 @@ export default function RoutineEditorPage() {
   const { id } = useParams();
   const isEditing = id !== 'new' && id != null;
   const navigate = useNavigate();
-  const { routines, createRoutine, updateRoutine, addStep, updateStep, deleteStep } = useRoutineStore();
+  const { routines, createRoutine, updateRoutine, addStep, updateStep, deleteStep, reorderSteps } = useRoutineStore();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const existing = isEditing ? routines.find((r) => r.id === id) : null;
 
@@ -83,6 +124,21 @@ export default function RoutineEditorPage() {
       await deleteStep(id, step.id);
     }
     setSteps(steps.filter((_, i) => i !== index));
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = steps.findIndex((s) => (s.id || s._tempId) === active.id);
+    const newIndex = steps.findIndex((s) => (s.id || s._tempId) === over.id);
+    const reordered = arrayMove(steps, oldIndex, newIndex);
+    setSteps(reordered);
+
+    // Persist reorder for existing routines with saved steps
+    if (isEditing && reordered.every((s) => s.id)) {
+      reorderSteps(id, reordered.map((s) => s.id));
+    }
   };
 
   const onSubmit = async (data) => {
@@ -198,29 +254,20 @@ export default function RoutineEditorPage() {
           </h2>
 
           {steps.length > 0 && (
-            <div className="space-y-3 mb-4">
-              {steps.map((step, index) => (
-                <div
-                  key={step.id || step._tempId}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl"
-                >
-                  <GripVertical className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                  <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{step.title}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      {step.durationMinutes && <span>{step.durationMinutes} min</span>}
-                      {step.isOptional && <span className="text-primary-500">Optional</span>}
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => handleRemoveStep(index)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                  </button>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={steps.map((s) => s.id || s._tempId)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3 mb-4">
+                  {steps.map((step, index) => (
+                    <SortableStep
+                      key={step.id || step._tempId}
+                      step={step}
+                      index={index}
+                      onRemove={() => handleRemoveStep(index)}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
 
           {/* Add step form */}

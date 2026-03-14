@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Check, SkipForward, Clock, Info, ArrowLeft, Zap, Trophy, Flame } from 'lucide-react';
 import { getBadgeIcon } from '@/lib/badgeIcons';
+import { fireCompletionConfetti, fireLevelUpConfetti } from '@/lib/confetti';
 
 export default function RoutineRunnerPage() {
   const { id } = useParams();
@@ -135,6 +136,12 @@ export default function RoutineRunnerPage() {
       try {
         const finishResult = await finishRun(completion.id);
         setResult(finishResult);
+        // Fire confetti
+        if (finishResult.leveledUp) {
+          fireLevelUpConfetti();
+        } else {
+          fireCompletionConfetti();
+        }
         // Refresh user data for updated XP/level
         checkAuth();
       } catch {
