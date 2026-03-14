@@ -6,7 +6,9 @@ import authRoutes from './routes/auth.js';
 import routineRoutes from './routes/routines.js';
 import completionRoutes from './routes/completions.js';
 import templateRoutes from './routes/templates.js';
+import gamificationRoutes from './routes/gamification.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { startDailyResetJob } from './jobs/dailyReset.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/routines', routineRoutes);
 app.use('/api/completions', completionRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/gamification', gamificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -44,4 +47,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`RoutineForge server running on http://localhost:${PORT}`);
+  startDailyResetJob();
 });

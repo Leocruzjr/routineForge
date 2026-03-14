@@ -1,5 +1,7 @@
 import prisma from '../prisma/client.js';
 import { apiResponse } from '../../../shared/constants.js';
+import { updateStreakOnCompletion } from '../services/streakService.js';
+import { checkAndAwardBadges } from '../services/badgeService.js';
 
 /**
  * POST /api/completions/start — Start a routine run
@@ -215,6 +217,12 @@ export async function finishCompletion(req, res, next) {
       data: { totalXp: newTotalXp, level: newLevel },
     });
 
+    // Update streak
+    const streakResult = await updateStreakOnCompletion(userId);
+
+    // Check for newly earned badges
+    const newBadges = await checkAndAwardBadges(userId);
+
     res.json(apiResponse(true, {
       completion: updated,
       xpBreakdown: {
@@ -227,6 +235,8 @@ export async function finishCompletion(req, res, next) {
       leveledUp,
       newLevel,
       newTotalXp,
+      streak: streakResult,
+      newBadges,
     }));
   } catch (err) {
     next(err);
