@@ -1,0 +1,30 @@
+{
+  "name": "routineforge-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx prisma db seed",
+    "db:studio": "npx prisma studio"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma",
+    "seed": "node src/prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.4.1"
+  }
+}

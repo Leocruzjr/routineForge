@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoutineType {
+  MORNING
+  BEDTIME
+  WORKOUT
+  CUSTOM
+}
+
+enum DifficultyTier {
+  EASY
+  MODERATE
+  COMMITTED
+  ELITE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  avatarUrl    String?
+  timezone     String   @default("America/New_York")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Gamification
+  totalXp       Int @default(0)
+  level         Int @default(1)
+  currentStreak Int @default(0)
+  longestStreak Int @default(0)
+  streakFreezes Int @default(2)
+
+  routines    Routine[]
+  completions RoutineCompletion[]
+  badges      UserBadge[]
+  rewards     UserReward[]
+}
+
+model Routine {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  type        RoutineType
+  description String?
+  difficulty  DifficultyTier @default(EASY)
+  isActive    Boolean       @default(true)
+  isDefault   Boolean       @default(false)
+  scheduledTime String?
+  daysOfWeek  Int[]
+
+  steps       RoutineStep[]
+  completions RoutineCompletion[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RoutineStep {
+  id              String  @id @default(cuid())
+  routineId       String
+  routine         Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  durationMinutes Int?
+  order           Int
+  icon            String?
+  isOptional      Boolean @default(false)
+  scienceNote     String?
+
+  completions StepCompletion[]
+
+  createdAt DateTime @default(now())
+}
+
+model RoutineCompletion {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineId      String
+  routine        Routine   @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  date           DateTime  @db.Date
+  startedAt      DateTime
+  completedAt    DateTime?
+  totalTimeMs    Int?
+  xpEarned       Int       @default(0)
+  stepsCompleted Int       @default(0)
+  stepsTotal     Int
+  completionPct  Float     @default(0)
+
+  stepCompletions StepCompletion[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, routineId, date])
+}
+
+model StepCompletion {
+  id                  String            @id @default(cuid())
+  routineCompletionId String
+  routineCompletion   RoutineCompletion @relation(fields: [routineCompletionId], references: [id], onDelete: Cascade)
+  stepId              String
+  step                RoutineStep       @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  completed           Boolean           @default(false)
+  skipped             Boolean           @default(false)
+  timeSpentMs         Int?
+  completedAt         DateTime?
+}
+
+model Badge {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  description String
+  icon        String
+  category    String
+  requirement Json
+  xpReward    Int    @default(0)
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model Reward {
+  id          String @id @default(cuid())
+  name        String
+  description String
+  xpCost      Int
+  icon        String
+  category    String
+
+  users UserReward[]
+}
+
+model UserReward {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId   String
+  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  redeemedAt DateTime @default(now())
+
+  @@unique([userId, rewardId])
+}
