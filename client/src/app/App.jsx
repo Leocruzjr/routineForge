@@ -11,6 +11,8 @@ import RoutineEditorPage from '@/features/routines/RoutineEditorPage';
 import RoutineRunnerPage from '@/features/routines/RoutineRunnerPage';
 import BadgesPage from '@/features/gamification/BadgesPage';
 import RewardsShopPage from '@/features/gamification/RewardsShopPage';
+import ProgressPage from '@/features/progress/ProgressPage';
+import SettingsPage from '@/features/settings/SettingsPage';
 
 function ProtectedRoute({ children }) {
   const { user, isLoading } = useAuthStore();
@@ -129,6 +131,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <RewardsShopPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <ProgressPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

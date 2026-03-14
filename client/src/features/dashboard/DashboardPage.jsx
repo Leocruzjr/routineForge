@@ -2,22 +2,28 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoutineStore } from '@/stores/routineStore';
+import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import RoutineCard from '@/features/routines/RoutineCard';
-import { Flame, Trophy, TrendingUp, Zap, Plus } from 'lucide-react';
+import { Flame, Trophy, TrendingUp, Zap, Plus, Award } from 'lucide-react';
+import { getBadgeIcon } from '@/lib/badgeIcons';
 import { xpForLevel } from '../../../../shared/constants.js';
+import { format, subDays } from 'date-fns';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions, deleteRoutine } = useRoutineStore();
+  const { badges, fetchBadges, stats, fetchStats } = useGamificationStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchRoutines();
     fetchTodayCompletions();
-  }, [fetchRoutines, fetchTodayCompletions]);
+    fetchBadges();
+    fetchStats();
+  }, [fetchRoutines, fetchTodayCompletions, fetchBadges, fetchStats]);
 
   const currentLevelXp = xpForLevel(user.level);
   const nextLevelXp = xpForLevel(user.level + 1);
@@ -34,8 +40,25 @@ export default function DashboardPage() {
   const getCompletion = (routineId) =>
     todayCompletions.find((c) => c.routineId === routineId);
 
+  // Most recent earned badge
+  const recentBadge = badges
+    .filter((b) => b.earned)
+    .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))[0];
+
+  // Weekly heatmap (last 7 days)
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), 6 - i);
+    const key = format(date, 'yyyy-MM-dd');
+    const entry = stats?.heatmap?.find((h) => h.date === key);
+    return {
+      label: format(date, 'EEE'),
+      date: key,
+      pct: entry?.completionPct ?? null,
+    };
+  });
+
   return (
-    <PageWrapper className="max-w-6xl mx-auto px-4 py-8">
+    <PageWrapper className="max-w-6xl mx-auto px-4 py-8 pb-24">
       <div className="mb-8">
         <h1 className="font-display text-3xl text-gray-900 dark:text-white">
           Good {getTimeOfDay()}, {user.username}
@@ -103,6 +126,71 @@ export default function DashboardPage() {
           />
         </div>
       </Card>
+
+      {/* Weekly heatmap + recent badge */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        {/* 7-day heatmap */}
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">This Week</h3>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
+              Full Stats
+            </Button>
+          </div>
+          <div className="flex items-end gap-2 justify-between">
+            {weekDays.map((day) => {
+              const height = day.pct != null ? Math.max(day.pct * 100, 8) : 8;
+              const color = day.pct == null
+                ? 'bg-gray-200 dark:bg-gray-700'
+                : day.pct >= 0.7
+                  ? 'bg-success-500'
+                  : day.pct > 0
+                    ? 'bg-success-300'
+                    : 'bg-gray-200 dark:bg-gray-700';
+
+              return (
+                <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
+                  <div
+                    className={`w-full rounded-lg ${color} transition-all duration-300`}
+                    style={{ height: `${height}px`, minHeight: '8px', maxHeight: '64px' }}
+                  />
+                  <span className="text-[10px] text-gray-400">{day.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Recent badge */}
+        <Card>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Latest Badge</h3>
+          {recentBadge ? (
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                {(() => {
+                  const Icon = getBadgeIcon(recentBadge.icon);
+                  return <Icon className="w-7 h-7 text-primary-500" />;
+                })()}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">{recentBadge.name}</p>
+                <p className="text-xs text-gray-500">{recentBadge.description}</p>
+                <p className="text-xs text-primary-500 font-mono mt-1">+{recentBadge.xpReward} XP</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Award className="w-7 h-7 text-gray-300" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">No badges yet</p>
+                <p className="text-xs text-gray-400">Complete routines to earn your first badge!</p>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Today's Routines */}
       <div className="flex items-center justify-between mb-4">
