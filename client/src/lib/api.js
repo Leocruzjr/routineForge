@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 /**
  * Wrapper around fetch that handles JSON responses, cookies, and error envelopes.
