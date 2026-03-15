@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "npx prisma migrate deploy && node src/index.js",
+    "build": "npx prisma generate && npx prisma migrate deploy",
+    "start": "node src/index.js",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx prisma db seed",
     "db:studio": "npx prisma studio"
@@ -22,9 +23,7 @@
     "express-rate-limit": "^7.5.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
-    "node-cron": "^3.0.3"
-  },
-  "devDependencies": {
+    "node-cron": "^3.0.3",
     "prisma": "^6.4.1"
   }
 }

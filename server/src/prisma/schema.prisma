@@ -169,3 +169,14 @@ model UserReward {
 
   @@unique([userId, rewardId])
 }
+
+model Feedback {
+  id         String   @id @default(cuid())
+  type       String
+  message    String
+  username   String   @default("anonymous")
+  email      String?
+  userAgent  String?
+  appVersion String   @default("unknown")
+  createdAt  DateTime @default(now())
+}

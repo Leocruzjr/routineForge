@@ -1,11 +1,6 @@
 import { Router } from 'express';
+import prisma from '../prisma/client.js';
 import { apiResponse } from '../../../shared/constants.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const FEEDBACK_FILE = path.join(__dirname, '../../feedback.json');
 
 const router = Router();
 
@@ -13,37 +8,26 @@ const router = Router();
  * POST /api/feedback — Store beta feedback
  * No auth required so guest users can submit too.
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { type, message, user, email, userAgent, timestamp, appVersion } = req.body;
+    const { type, message, user, email, userAgent, appVersion } = req.body;
 
     if (!message || !type) {
       return res.status(400).json(apiResponse(false, null, 'Message and type are required'));
     }
 
-    const entry = {
-      id: crypto.randomUUID(),
-      type,
-      message,
-      user: user || 'anonymous',
-      email: email || null,
-      userAgent: userAgent || null,
-      timestamp: timestamp || new Date().toISOString(),
-      appVersion: appVersion || 'unknown',
-    };
+    const entry = await prisma.feedback.create({
+      data: {
+        type,
+        message,
+        username: user || 'anonymous',
+        email: email || null,
+        userAgent: userAgent || null,
+        appVersion: appVersion || 'unknown',
+      },
+    });
 
-    // Append to feedback JSON file
-    let existing = [];
-    try {
-      existing = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
-    } catch {
-      // File doesn't exist yet
-    }
-
-    existing.push(entry);
-    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(existing, null, 2));
-
-    console.log(`[Feedback] ${type} from ${entry.user}: ${message.slice(0, 80)}`);
+    console.log(`[Feedback] ${type} from ${entry.username}: ${message.slice(0, 80)}`);
 
     res.status(201).json(apiResponse(true, { message: 'Feedback received' }));
   } catch (err) {
@@ -55,16 +39,13 @@ router.post('/', (req, res) => {
 /**
  * GET /api/feedback — List all feedback (for admin review)
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    let existing = [];
-    try {
-      existing = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf-8'));
-    } catch {
-      // No feedback yet
-    }
+    const feedback = await prisma.feedback.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
 
-    res.json(apiResponse(true, { feedback: existing, total: existing.length }));
+    res.json(apiResponse(true, { feedback, total: feedback.length }));
   } catch (err) {
     res.status(500).json(apiResponse(false, null, 'Failed to read feedback'));
   }
