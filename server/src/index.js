@@ -7,6 +7,7 @@ import routineRoutes from './routes/routines.js';
 import completionRoutes from './routes/completions.js';
 import templateRoutes from './routes/templates.js';
 import gamificationRoutes from './routes/gamification.js';
+import feedbackRoutes from './routes/feedback.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { startDailyResetJob } from './jobs/dailyReset.js';
 
@@ -36,6 +37,7 @@ app.use('/api/routines', routineRoutes);
 app.use('/api/completions', completionRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/gamification', gamificationRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

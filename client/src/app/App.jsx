@@ -4,6 +4,8 @@ import { AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import Navbar from '@/components/layout/Navbar';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
+import BetaBanner from '@/components/feedback/BetaBanner';
 import LoginPage from '@/features/auth/LoginPage';
 import RegisterPage from '@/features/auth/RegisterPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
@@ -65,6 +67,8 @@ export default function App() {
   return (
     <>
       {!hideNavbar && <Navbar />}
+      {!hideNavbar && <InstallPrompt />}
+      {!hideNavbar && <BetaBanner />}
       <AnimatePresence mode="wait">
         <Routes>
           {/* Onboarding */}
