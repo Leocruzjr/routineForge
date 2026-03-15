@@ -21,6 +21,11 @@ enum DifficultyTier {
   ELITE
 }
 
+enum PlanType {
+  FREE
+  PRO
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -30,6 +35,10 @@ model User {
   timezone     String   @default("America/New_York")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  // Plan
+  plan          PlanType  @default(FREE)
+  planExpiresAt DateTime?
 
   // Gamification
   totalXp       Int @default(0)

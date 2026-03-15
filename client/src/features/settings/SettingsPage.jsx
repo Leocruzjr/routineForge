@@ -3,11 +3,16 @@ import { useThemeStore } from '@/stores/themeStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { User, Mail, Globe, Shield, Sun, Moon, Palette } from 'lucide-react';
+import UpgradeModal from '@/components/ui/UpgradeModal';
+import { useState } from 'react';
+import { User, Mail, Globe, Shield, Sun, Moon, Palette, Crown, Check } from 'lucide-react';
+import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
 
 export default function SettingsPage() {
-  const { user, isGuest, logout } = useAuthStore();
+  const { user, isGuest, logout, isPro, upgradePlan } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const userIsPro = isPro();
 
   return (
     <PageWrapper className="max-w-2xl mx-auto px-4 py-8 pb-24">
@@ -88,6 +93,47 @@ export default function SettingsPage() {
         </div>
       </Card>
 
+      {/* Subscription */}
+      <Card className="mb-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Crown className={`w-5 h-5 ${userIsPro ? 'text-primary-500' : 'text-gray-400'}`} />
+          Subscription
+        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                userIsPro
+                  ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+              }`}>
+                {userIsPro ? 'Pro' : 'Free'}
+              </span>
+              {userIsPro && user.planExpiresAt && (
+                <span className="text-xs text-gray-500">
+                  expires {new Date(user.planExpiresAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+            {!userIsPro && (
+              <p className="text-xs text-gray-500 mt-1">
+                {FREE_TIER_LIMITS.maxActiveRoutines} routines, {FREE_TIER_LIMITS.statsHistoryDays}-day stats
+              </p>
+            )}
+            {userIsPro && (
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <Check className="w-3 h-3 text-success-500" /> Unlimited routines, full stats history
+              </p>
+            )}
+          </div>
+          {!userIsPro && !isGuest && (
+            <Button size="sm" onClick={() => setShowUpgrade(true)}>
+              <Crown className="w-3.5 h-3.5 mr-1" /> Upgrade
+            </Button>
+          )}
+        </div>
+      </Card>
+
       {/* Stats */}
       <Card className="mb-6">
         <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Stats</h2>
@@ -121,6 +167,17 @@ export default function SettingsPage() {
           Sign Out
         </Button>
       </Card>
+
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        onUpgrade={async () => {
+          try {
+            await upgradePlan();
+            setShowUpgrade(false);
+          } catch {}
+        }}
+      />
     </PageWrapper>
   );
 }

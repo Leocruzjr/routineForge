@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -6,11 +6,14 @@ import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import CalendarHeatmap from './CalendarHeatmap';
 import WeeklyXpChart from './WeeklyXpChart';
-import { Flame, Trophy, TrendingUp, Target, Zap } from 'lucide-react';
+import { Flame, Trophy, TrendingUp, Target, Zap, Crown } from 'lucide-react';
+import UpgradeModal from '@/components/ui/UpgradeModal';
 
 export default function ProgressPage() {
   const { stats, fetchStats, badges, fetchBadges } = useGamificationStore();
-  const { user } = useAuthStore();
+  const { user, isPro, upgradePlan } = useAuthStore();
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const userIsPro = isPro();
 
   useEffect(() => {
     fetchStats();
@@ -39,12 +42,29 @@ export default function ProgressPage() {
 
       {/* Calendar Heatmap */}
       <Card className="mb-8">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Target className="w-5 h-5 text-success-500" />
-          Completion Heatmap
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-success-500" />
+            Completion Heatmap
+          </h2>
+          {!userIsPro && (
+            <button
+              onClick={() => setShowUpgrade(true)}
+              className="flex items-center gap-1 text-xs text-primary-500 hover:underline font-medium"
+            >
+              <Crown className="w-3.5 h-3.5" /> Unlock 90 days
+            </button>
+          )}
+        </div>
         {stats?.heatmap ? (
-          <CalendarHeatmap data={stats.heatmap} />
+          <>
+            <CalendarHeatmap data={stats.heatmap} />
+            {!userIsPro && (
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Showing last 7 days — upgrade to Pro for full 90-day history
+              </p>
+            )}
+          </>
         ) : (
           <div className="h-32 flex items-center justify-center text-gray-400">
             Loading...
@@ -54,10 +74,20 @@ export default function ProgressPage() {
 
       {/* Weekly XP Chart */}
       <Card className="mb-8">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-primary-500" />
-          Weekly XP
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Zap className="w-5 h-5 text-primary-500" />
+            Weekly XP
+          </h2>
+          {!userIsPro && (
+            <button
+              onClick={() => setShowUpgrade(true)}
+              className="flex items-center gap-1 text-xs text-primary-500 hover:underline font-medium"
+            >
+              <Crown className="w-3.5 h-3.5" /> Unlock 8 weeks
+            </button>
+          )}
+        </div>
         {stats?.weeklyXp && stats.weeklyXp.length > 0 ? (
           <WeeklyXpChart data={stats.weeklyXp} />
         ) : (
@@ -114,6 +144,18 @@ export default function ProgressPage() {
           </div>
         </Card>
       )}
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        onUpgrade={async () => {
+          try {
+            await upgradePlan();
+            setShowUpgrade(false);
+            fetchStats();
+          } catch {}
+        }}
+        reason="Unlock full stats history with 90-day heatmap and 8-week XP trends."
+      />
     </PageWrapper>
   );
 }

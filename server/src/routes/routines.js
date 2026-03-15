@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
+import { enforceRoutineLimit } from '../middleware/planGuard.js';
 import {
   createRoutineSchema,
   updateRoutineSchema,
@@ -26,7 +27,7 @@ router.use(authenticate);
 
 router.get('/', getRoutines);
 router.get('/:id', getRoutine);
-router.post('/', validate(createRoutineSchema), createRoutine);
+router.post('/', validate(createRoutineSchema), enforceRoutineLimit, createRoutine);
 router.put('/:id', validate(updateRoutineSchema), updateRoutine);
 router.delete('/:id', deleteRoutine);
 

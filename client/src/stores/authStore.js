@@ -13,6 +13,8 @@ const DEFAULT_GUEST = {
   longestStreak: 0,
   streakFreezes: 2,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  plan: 'FREE',
+  planExpiresAt: null,
 };
 
 export const useAuthStore = create((set, get) => ({
@@ -112,6 +114,33 @@ export const useAuthStore = create((set, get) => ({
       } finally {
         set({ user: null, isGuest: false, error: null });
       }
+    }
+  },
+
+  /**
+   * Check if the current user has an active Pro plan
+   */
+  isPro: () => {
+    const { user } = get();
+    if (!user) return false;
+    if (user.plan !== 'PRO') return false;
+    if (user.planExpiresAt && new Date(user.planExpiresAt) < new Date()) return false;
+    return true;
+  },
+
+  /**
+   * Upgrade to Pro (placeholder — will integrate with payment later)
+   */
+  upgradePlan: async () => {
+    if (get().isGuest) return;
+    try {
+      const { data } = await api.post('/gamification/plan/upgrade', { plan: 'PRO' });
+      set((state) => ({
+        user: { ...state.user, plan: data.plan, planExpiresAt: data.planExpiresAt },
+      }));
+      return data;
+    } catch (err) {
+      throw err;
     }
   },
 

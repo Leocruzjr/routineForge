@@ -53,6 +53,27 @@ export const REWARD_CATEGORIES = {
   UNLOCK: 'unlock',
 };
 
+// Plan tiers
+export const PLANS = {
+  FREE: 'FREE',
+  PRO: 'PRO',
+};
+
+export const FREE_TIER_LIMITS = {
+  maxActiveRoutines: 3,
+  statsHistoryDays: 7,
+  heatmapDays: 7,
+};
+
+export const PRO_FEATURES = {
+  unlimitedRoutines: true,
+  fullStatsHistory: true,
+  fullHeatmap: true,        // 90-day heatmap
+  detailedAnalytics: true,
+  premiumBadges: true,
+  exportData: true,
+};
+
 // API response envelope helper
 export function apiResponse(success, data = null, error = null) {
   return { success, data, error };

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+import { FREE_TIER_LIMITS } from '../../../shared/constants.js';
 
 const GUEST_ROUTINES_KEY = 'rf_guest_routines';
 const GUEST_COMPLETIONS_KEY = 'rf_guest_completions';
@@ -60,6 +61,11 @@ export const useRoutineStore = create((set, get) => ({
 
   createRoutine: async (routineData) => {
     if (isGuest()) {
+      // Enforce free tier limit for guests
+      const existing = loadGuestRoutines().filter((r) => r.isActive !== false);
+      if (existing.length >= FREE_TIER_LIMITS.maxActiveRoutines) {
+        throw new Error(`Free plan is limited to ${FREE_TIER_LIMITS.maxActiveRoutines} active routines. Upgrade to Pro for unlimited routines.`);
+      }
       const { steps = [], ...rest } = routineData;
       const routine = {
         ...rest,

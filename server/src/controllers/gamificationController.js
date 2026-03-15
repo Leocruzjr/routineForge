@@ -1,5 +1,5 @@
 import prisma from '../prisma/client.js';
-import { apiResponse, xpForLevel } from '../../../shared/constants.js';
+import { apiResponse, xpForLevel, FREE_TIER_LIMITS } from '../../../shared/constants.js';
 
 /**
  * GET /api/gamification/profile — XP, level, streak, freeze count
@@ -14,6 +14,8 @@ export async function getProfile(req, res, next) {
         currentStreak: true,
         longestStreak: true,
         streakFreezes: true,
+        plan: true,
+        planExpiresAt: true,
       },
     });
 
@@ -158,15 +160,58 @@ export async function redeemReward(req, res, next) {
 }
 
 /**
+ * POST /api/gamification/plan/upgrade — Upgrade/downgrade plan (placeholder for payment integration)
+ */
+export async function upgradePlan(req, res, next) {
+  try {
+    const userId = req.user.userId;
+    const { plan } = req.body;
+
+    if (!['FREE', 'PRO'].includes(plan)) {
+      return res.status(400).json(apiResponse(false, null, 'Invalid plan'));
+    }
+
+    const data = { plan };
+    if (plan === 'PRO') {
+      // Set expiry 30 days from now (placeholder — real payments would set this)
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 30);
+      data.planExpiresAt = expires;
+    } else {
+      data.planExpiresAt = null;
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { plan: true, planExpiresAt: true },
+    });
+
+    res.json(apiResponse(true, user));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * GET /api/gamification/stats — Aggregated stats for progress page
  */
 export async function getStats(req, res, next) {
   try {
     const userId = req.user.userId;
 
-    // Completion history for heatmap (last 90 days)
+    // Check user plan to determine data range
+    const userPlan = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, planExpiresAt: true },
+    });
+
+    const isPro = userPlan.plan === 'PRO' && (!userPlan.planExpiresAt || userPlan.planExpiresAt > new Date());
+    const heatmapDays = isPro ? 90 : FREE_TIER_LIMITS.heatmapDays;
+
+    // Completion history for heatmap
     const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - heatmapDays);
     ninetyDaysAgo.setHours(0, 0, 0, 0);
 
     const completions = await prisma.routineCompletion.findMany({
@@ -192,9 +237,10 @@ export async function getStats(req, res, next) {
       _avg: { completionPct: true },
     });
 
-    // XP earned per week (last 8 weeks)
+    // XP earned per week (pro: 8 weeks, free: 1 week)
+    const weekCount = isPro ? 8 : 1;
     const eightWeeksAgo = new Date();
-    eightWeeksAgo.setDate(eightWeeksAgo.getDate() - 56);
+    eightWeeksAgo.setDate(eightWeeksAgo.getDate() - weekCount * 7);
     eightWeeksAgo.setHours(0, 0, 0, 0);
 
     const recentCompletions = await prisma.routineCompletion.findMany({
@@ -217,6 +263,7 @@ export async function getStats(req, res, next) {
       totalCompleted,
       avgCompletionPct: avgCompletion._avg.completionPct || 0,
       weeklyXp: Object.entries(weeklyXp).map(([week, xp]) => ({ week, xp })),
+      isPro,
     }));
   } catch (err) {
     next(err);

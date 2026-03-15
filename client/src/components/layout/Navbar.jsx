@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { Flame, LogOut, Home, ListChecks, Award, ShoppingBag, BarChart3, Settings, UserPlus, Sun, Moon } from 'lucide-react';
+import { Flame, LogOut, Home, ListChecks, Award, ShoppingBag, BarChart3, Settings, UserPlus, Sun, Moon, Crown } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useThemeStore } from '@/stores/themeStore';
 
@@ -13,7 +13,8 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const { user, isGuest, logout } = useAuthStore();
+  const { user, isGuest, logout, isPro } = useAuthStore();
+  const userIsPro = user ? isPro() : false;
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
 
@@ -66,8 +67,9 @@ export default function Navbar() {
                 <span className="text-sm font-mono text-primary-600 dark:text-primary-400">
                   Lv.{user.level}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 flex items-center gap-1">
                   {isGuest ? 'Guest' : user.username}
+                  {userIsPro && <Crown className="w-3.5 h-3.5 text-primary-500" />}
                 </span>
               </div>
               <button

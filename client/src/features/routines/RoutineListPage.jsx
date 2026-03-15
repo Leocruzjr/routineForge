@@ -1,16 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRoutineStore } from '@/stores/routineStore';
+import { useAuthStore } from '@/stores/authStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
+import UpgradeModal from '@/components/ui/UpgradeModal';
 import RoutineCard from './RoutineCard';
 import TemplatePickerModal from './TemplatePickerModal';
-import { Plus } from 'lucide-react';
+import { Plus, Crown } from 'lucide-react';
+import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
 
 export default function RoutineListPage() {
   const navigate = useNavigate();
   const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions, deleteRoutine, isLoading } = useRoutineStore();
+  const { isPro, upgradePlan } = useAuthStore();
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const userIsPro = isPro();
+  const activeCount = routines.filter((r) => r.isActive).length;
+  const atLimit = !userIsPro && activeCount >= FREE_TIER_LIMITS.maxActiveRoutines;
+
+  const handleCreate = () => {
+    if (atLimit) {
+      setShowUpgrade(true);
+    } else {
+      navigate('/routines/new');
+    }
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      await upgradePlan();
+      setShowUpgrade(false);
+    } catch {
+      // payment integration will handle this later
+    }
+  };
 
   useEffect(() => {
     fetchRoutines();
@@ -45,8 +71,9 @@ export default function RoutineListPage() {
           <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
             Browse Templates
           </Button>
-          <Button size="sm" onClick={() => navigate('/routines/new')}>
+          <Button size="sm" onClick={handleCreate}>
             <Plus className="w-4 h-4 mr-1" /> Create
+            {atLimit && <Crown className="w-3.5 h-3.5 ml-1 text-primary-200" />}
           </Button>
         </div>
       </div>
@@ -106,9 +133,30 @@ export default function RoutineListPage() {
         </>
       )}
 
+      {/* Routine limit indicator for free users */}
+      {!userIsPro && activeCount > 0 && (
+        <div className="mt-6 text-center">
+          <p className="text-xs text-gray-400">
+            {activeCount} / {FREE_TIER_LIMITS.maxActiveRoutines} active routines
+            {atLimit && (
+              <button onClick={() => setShowUpgrade(true)} className="ml-2 text-primary-500 hover:underline font-medium">
+                Upgrade for more
+              </button>
+            )}
+          </p>
+        </div>
+      )}
+
       {showTemplates && (
         <TemplatePickerModal onClose={() => setShowTemplates(false)} />
       )}
+
+      <UpgradeModal
+        isOpen={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        onUpgrade={handleUpgrade}
+        reason={`You've reached the free plan limit of ${FREE_TIER_LIMITS.maxActiveRoutines} active routines.`}
+      />
     </PageWrapper>
   );
 }

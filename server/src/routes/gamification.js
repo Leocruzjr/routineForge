@@ -6,6 +6,7 @@ import {
   getRewards,
   redeemReward,
   getStats,
+  upgradePlan,
 } from '../controllers/gamificationController.js';
 
 const router = Router();
@@ -17,5 +18,6 @@ router.get('/badges', getBadges);
 router.get('/rewards', getRewards);
 router.post('/rewards/:id/redeem', redeemReward);
 router.get('/stats', getStats);
+router.post('/plan/upgrade', upgradePlan);
 
 export default router;
