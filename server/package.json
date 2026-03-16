@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "postinstall": "DATABASE_URL=\"placeholder://localhost\" npx prisma generate",
-    "build": "npx prisma generate && npx prisma migrate deploy",
-    "start": "npx prisma migrate deploy && node src/index.js",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && prisma migrate deploy",
+    "start": "prisma migrate deploy && node src/index.js",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx prisma db seed",
     "db:studio": "npx prisma studio"
