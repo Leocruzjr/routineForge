@@ -38,6 +38,9 @@ export default function Navbar() {
             <span className="font-display text-xl text-gray-900 dark:text-white">
               RoutineForge
             </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400 px-1.5 py-0.5 rounded-full leading-none">
+              Beta
+            </span>
           </Link>
 
           {user && (

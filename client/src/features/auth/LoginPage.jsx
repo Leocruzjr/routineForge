@@ -41,7 +41,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Flame className="w-12 h-12 text-primary-500 mx-auto mb-3" />
-          <h1 className="font-display text-3xl text-gray-900 dark:text-white">Welcome back</h1>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <h1 className="font-display text-3xl text-gray-900 dark:text-white">Welcome back</h1>
+            <span className="text-[10px] font-semibold uppercase tracking-wider bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400 px-1.5 py-0.5 rounded-full leading-none">Beta</span>
+          </div>
           <p className="text-gray-500 mt-1">Sign in to continue your streak</p>
         </div>
 
