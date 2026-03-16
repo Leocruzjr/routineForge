@@ -15,13 +15,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map(s => s.trim());
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map(s => s.trim().replace(/\/$/, ''));
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) return callback(null, true);
+    // Match origin with or without trailing slash
+    const normalized = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(normalized) || allowedOrigins.some(o => normalized.startsWith(o))) {
       callback(null, true);
     } else {
+      console.log(`CORS blocked origin: ${origin}, allowed: ${allowedOrigins.join(', ')}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
