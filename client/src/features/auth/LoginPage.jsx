@@ -17,7 +17,7 @@ const schema = yup.object({
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, error, clearError } = useAuthStore();
+  const { login, loginAsGuest, error, clearError } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -82,6 +82,15 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          <div className="border-t border-gray-100 dark:border-gray-700 mt-4 pt-4">
+            <button
+              onClick={() => { loginAsGuest(); navigate('/'); }}
+              className="w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 py-2 font-medium"
+            >
+              Continue as Guest
+            </button>
+          </div>
         </Card>
       </div>
     </PageWrapper>

@@ -143,11 +143,24 @@ export default function RoutineEditorPage() {
 
   const onSubmit = async (data) => {
     setSaving(true);
+
+    // Auto-add any in-progress step the user typed but didn't click "Add Step"
+    let finalSteps = [...steps];
+    if (newStep.title.trim()) {
+      finalSteps.push({
+        ...newStep,
+        durationMinutes: newStep.durationMinutes ? parseInt(newStep.durationMinutes) : null,
+        order: steps.length + 1,
+        _tempId: Date.now(),
+      });
+      setNewStep({ title: '', description: '', durationMinutes: '', isOptional: false });
+    }
+
     try {
       if (isEditing) {
         await updateRoutine(id, { ...data, daysOfWeek });
         // Add any new steps (ones without an id)
-        for (const step of steps) {
+        for (const step of finalSteps) {
           if (!step.id) {
             await addStep(id, {
               title: step.title,
@@ -161,7 +174,7 @@ export default function RoutineEditorPage() {
         await createRoutine({
           ...data,
           daysOfWeek,
-          steps: steps.map(({ _tempId, ...s }) => ({
+          steps: finalSteps.map(({ _tempId, ...s }) => ({
             title: s.title,
             description: s.description || null,
             durationMinutes: s.durationMinutes || null,
@@ -223,7 +236,9 @@ export default function RoutineEditorPage() {
               </select>
             </div>
 
-            <Input label="Scheduled Time" type="time" {...register('scheduledTime')} />
+            <div className="max-w-[200px]">
+              <Input label="Scheduled Time" type="time" {...register('scheduledTime')} />
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Days of Week</label>

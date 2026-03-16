@@ -54,6 +54,11 @@ export default function TemplatePickerModal({ onClose }) {
           </div>
 
           <div className="p-6 space-y-4">
+            {templates.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <p>Loading templates...</p>
+              </div>
+            )}
             {templates.map((template) => {
               const tier = DIFFICULTY_TIERS[template.difficulty];
               const isExpanded = expandedId === template.id;
