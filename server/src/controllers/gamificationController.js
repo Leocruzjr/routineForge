@@ -258,11 +258,36 @@ export async function getStats(req, res, next) {
       weeklyXp[key] = (weeklyXp[key] || 0) + c.xpEarned;
     }
 
+    // Per-routine average completion
+    const routineStats = await prisma.routineCompletion.groupBy({
+      by: ['routineId'],
+      where: { userId, completedAt: { not: null } },
+      _avg: { completionPct: true },
+      _count: { id: true },
+    });
+
+    // Get routine names for the stats
+    const routineIds = routineStats.map((rs) => rs.routineId);
+    const routineNames = await prisma.routine.findMany({
+      where: { id: { in: routineIds } },
+      select: { id: true, name: true, type: true },
+    });
+    const nameMap = new Map(routineNames.map((r) => [r.id, r]));
+
+    const perRoutine = routineStats.map((rs) => ({
+      routineId: rs.routineId,
+      name: nameMap.get(rs.routineId)?.name || 'Unknown',
+      type: nameMap.get(rs.routineId)?.type || 'MORNING',
+      avgCompletionPct: rs._avg.completionPct || 0,
+      completionCount: rs._count.id,
+    }));
+
     res.json(apiResponse(true, {
       heatmap,
       totalCompleted,
       avgCompletionPct: avgCompletion._avg.completionPct || 0,
       weeklyXp: Object.entries(weeklyXp).map(([week, xp]) => ({ week, xp })),
+      perRoutine,
       isPro,
     }));
   } catch (err) {

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { Flame, LogOut, Home, ListChecks, Award, ShoppingBag, BarChart3, Settings, UserPlus, Sun, Moon, Crown } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useThemeStore } from '@/stores/themeStore';
 
 const navLinks = [
@@ -17,6 +19,7 @@ export default function Navbar() {
   const userIsPro = user ? isPro() : false;
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
+  const [showLogout, setShowLogout] = useState(false);
 
   return (
     <>
@@ -85,9 +88,7 @@ export default function Navbar() {
               <Link to="/settings" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
                 <Settings className="w-4 h-4" />
               </Link>
-              <Button variant="ghost" size="sm" onClick={() => {
-                if (window.confirm('Are you sure you want to sign out?')) logout();
-              }}>
+              <Button variant="ghost" size="sm" onClick={() => setShowLogout(true)}>
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -119,6 +120,16 @@ export default function Navbar() {
           </div>
         </nav>
       )}
+
+      <ConfirmModal
+        isOpen={showLogout}
+        title="Sign Out"
+        message="Are you sure you want to sign out? Any unsaved progress will be lost."
+        confirmLabel="Sign Out"
+        cancelLabel="Cancel"
+        onConfirm={() => { setShowLogout(false); logout(); }}
+        onCancel={() => setShowLogout(false)}
+      />
     </>
   );
 }

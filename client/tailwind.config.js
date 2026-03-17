@@ -54,8 +54,8 @@ export default {
           900: 'var(--color-accent-900, #7C2D12)',
         },
         surface: {
-          light: '#FEFCE8',
-          dark: '#0F172A',
+          light: 'var(--color-surface-light, #FEFCE8)',
+          dark: 'var(--color-surface-dark, #0F172A)',
         },
       },
       fontFamily: {

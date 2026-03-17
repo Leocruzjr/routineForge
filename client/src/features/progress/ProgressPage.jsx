@@ -2,28 +2,46 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useRoutineStore } from '@/stores/routineStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import CalendarHeatmap from './CalendarHeatmap';
 import WeeklyXpChart from './WeeklyXpChart';
-import { Flame, Trophy, TrendingUp, Target, Zap, Crown } from 'lucide-react';
+import { Flame, Trophy, TrendingUp, Target, Zap, Crown, Star } from 'lucide-react';
+import { getBadgeIcon } from '@/lib/badgeIcons';
+import { format } from 'date-fns';
 import UpgradeModal from '@/components/ui/UpgradeModal';
 
 export default function ProgressPage() {
   const { stats, fetchStats, badges, fetchBadges } = useGamificationStore();
   const { user, isPro, upgradePlan } = useAuthStore();
+  const { routines, fetchRoutines } = useRoutineStore();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const userIsPro = isPro();
 
   useEffect(() => {
     fetchStats();
     fetchBadges();
-  }, [fetchStats, fetchBadges]);
+    fetchRoutines();
+  }, [fetchStats, fetchBadges, fetchRoutines]);
 
   const recentBadges = badges
     .filter((b) => b.earned)
     .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))
     .slice(0, 3);
+
+  // Top routine by highest average completion percentage
+  const topRoutine = (() => {
+    if (!stats?.perRoutine || stats.perRoutine.length === 0) return null;
+    const sorted = [...stats.perRoutine].sort((a, b) => b.avgCompletionPct - a.avgCompletionPct);
+    const best = sorted[0];
+    if (!best || best.avgCompletionPct === 0) return null;
+    return {
+      name: best.name,
+      type: best.type || 'Daily',
+      pct: Math.round(best.avgCompletionPct * 100),
+    };
+  })();
 
   return (
     <PageWrapper className="max-w-4xl mx-auto px-4 py-8 pb-24">
@@ -88,8 +106,8 @@ export default function ProgressPage() {
             </button>
           )}
         </div>
-        {stats?.weeklyXp && stats.weeklyXp.length > 0 ? (
-          <WeeklyXpChart data={stats.weeklyXp} />
+        {stats?.heatmap && stats.heatmap.length > 0 ? (
+          <WeeklyXpChart data={stats.heatmap} />
         ) : (
           <div className="h-32 flex items-center justify-center text-gray-400">
             Complete routines to see your XP chart
@@ -121,6 +139,29 @@ export default function ProgressPage() {
         </div>
       </Card>
 
+      {/* Top Routine */}
+      {topRoutine && (
+        <Card className="mb-8">
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Star className="w-5 h-5 text-accent-500" />
+            Top Routine
+          </h2>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center flex-shrink-0">
+              <Trophy className="w-7 h-7 text-accent-500" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-white">{topRoutine.name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{topRoutine.type} routine</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-mono font-bold text-accent-500">{topRoutine.pct}%</p>
+              <p className="text-xs text-gray-500">completion</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Recent Badges */}
       {recentBadges.length > 0 && (
         <Card>
@@ -129,18 +170,26 @@ export default function ProgressPage() {
             Recent Badges
           </h2>
           <div className="space-y-3">
-            {recentBadges.map((badge) => (
-              <div key={badge.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-primary-500" />
+            {recentBadges.map((badge) => {
+              const BadgeIcon = getBadgeIcon(badge.icon);
+              return (
+                <div key={badge.id} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                    <BadgeIcon className="w-5 h-5 text-primary-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">{badge.name}</p>
+                    <p className="text-xs text-gray-500">{badge.description}</p>
+                    {badge.earnedAt && (
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Earned {format(new Date(badge.earnedAt), 'MM/dd/yy')}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs font-mono text-primary-500">+{badge.xpReward} XP</span>
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-sm text-gray-900 dark:text-white">{badge.name}</p>
-                  <p className="text-xs text-gray-500">{badge.description}</p>
-                </div>
-                <span className="text-xs font-mono text-primary-500">+{badge.xpReward} XP</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       )}

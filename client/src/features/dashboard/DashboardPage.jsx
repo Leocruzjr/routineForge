@@ -17,12 +17,15 @@ export default function DashboardPage() {
   const { badges, fetchBadges, stats, fetchStats } = useGamificationStore();
   const navigate = useNavigate();
 
+  const { checkAuth } = useAuthStore();
+
   useEffect(() => {
+    checkAuth(); // Refresh user data (XP, level) on every dashboard visit
     fetchRoutines();
     fetchTodayCompletions();
     fetchBadges();
     fetchStats();
-  }, [fetchRoutines, fetchTodayCompletions, fetchBadges, fetchStats]);
+  }, [checkAuth, fetchRoutines, fetchTodayCompletions, fetchBadges, fetchStats]);
 
   const currentLevelXp = xpForLevel(user.level);
   const nextLevelXp = xpForLevel(user.level + 1);
@@ -177,7 +180,12 @@ export default function DashboardPage() {
 
         {/* Recent badge */}
         <Card>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Latest Badge</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Latest Badge</h3>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/badges')}>
+              See All Badges
+            </Button>
+          </div>
           {recentBadge ? (
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
@@ -190,6 +198,11 @@ export default function DashboardPage() {
                 <p className="font-semibold text-gray-900 dark:text-white">{recentBadge.name}</p>
                 <p className="text-xs text-gray-500">{recentBadge.description}</p>
                 <p className="text-xs text-primary-500 font-mono mt-1">+{recentBadge.xpReward} XP</p>
+                {recentBadge.earnedAt && (
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Earned {format(new Date(recentBadge.earnedAt), 'MM/dd/yy')}
+                  </p>
+                )}
               </div>
             </div>
           ) : (

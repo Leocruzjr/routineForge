@@ -257,11 +257,11 @@ export default function RoutineRunnerPage() {
                     <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
                       <BadgeIcon className="w-5 h-5 text-primary-500" />
                     </div>
-                    <div className="text-left">
+                    <div className="text-left flex-1">
                       <p className="font-semibold text-sm text-gray-900 dark:text-white">{badge.name}</p>
                       <p className="text-xs text-gray-500">{badge.description}</p>
                     </div>
-                    <span className="text-xs font-mono text-primary-500 ml-auto">+{badge.xpReward} XP</span>
+                    <span className="text-xs font-mono text-primary-500 flex-shrink-0">+{badge.xpReward} XP</span>
                   </motion.div>
                   );
                 })}
@@ -350,30 +350,6 @@ export default function RoutineRunnerPage() {
                   <p className="text-xs text-gray-400 mt-1">
                     Target: {currentStep.durationMinutes} min
                   </p>
-                  {!timerRunning && timer === 0 && (
-                    <button
-                      onClick={() => setTimerRunning(true)}
-                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
-                    >
-                      <Clock className="w-4 h-4" /> Start Timer
-                    </button>
-                  )}
-                  {timerRunning && (
-                    <button
-                      onClick={() => setTimerRunning(false)}
-                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      Pause
-                    </button>
-                  )}
-                  {!timerRunning && timer > 0 && (
-                    <button
-                      onClick={() => setTimerRunning(true)}
-                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
-                    >
-                      Resume
-                    </button>
-                  )}
                 </div>
               )}
 
@@ -391,6 +367,20 @@ export default function RoutineRunnerPage() {
 
           {/* Action buttons */}
           <div className="flex gap-3">
+            {currentStep.durationMinutes && !timerRunning && timer === 0 ? (
+              <Button className="flex-1" variant="outline" onClick={() => setTimerRunning(true)}>
+                <Clock className="w-5 h-5 mr-2" />
+                Start Timer
+              </Button>
+            ) : currentStep.durationMinutes && timerRunning ? (
+              <Button className="flex-1" variant="outline" onClick={() => setTimerRunning(false)}>
+                Pause
+              </Button>
+            ) : currentStep.durationMinutes && !timerRunning && timer > 0 ? (
+              <Button className="flex-1" variant="outline" onClick={() => setTimerRunning(true)}>
+                Resume
+              </Button>
+            ) : null}
             <Button className="flex-1" onClick={handleComplete}>
               <Check className="w-5 h-5 mr-2" />
               Done
