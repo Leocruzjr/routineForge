@@ -10,3 +10,13 @@
     --color-accent: #F97316;
   }
 }
+
+/* iOS standalone PWA safe area utilities */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}

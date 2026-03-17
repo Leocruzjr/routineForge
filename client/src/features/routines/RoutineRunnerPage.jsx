@@ -77,17 +77,11 @@ export default function RoutineRunnerPage() {
     return () => clearInterval(timerRef.current);
   }, [timerRunning]);
 
-  // Auto-start timer when moving to a step with duration
+  // Reset timer when moving to a new step (don't auto-start)
   useEffect(() => {
-    const currentStep = steps[currentStepIndex];
-    if (currentStep?.durationMinutes) {
-      setTimer(0);
-      setTimerRunning(true);
-    } else {
-      setTimerRunning(false);
-      setTimer(0);
-    }
-  }, [currentStepIndex, steps]);
+    setTimer(0);
+    setTimerRunning(false);
+  }, [currentStepIndex]);
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -356,6 +350,30 @@ export default function RoutineRunnerPage() {
                   <p className="text-xs text-gray-400 mt-1">
                     Target: {currentStep.durationMinutes} min
                   </p>
+                  {!timerRunning && timer === 0 && (
+                    <button
+                      onClick={() => setTimerRunning(true)}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                    >
+                      <Clock className="w-4 h-4" /> Start Timer
+                    </button>
+                  )}
+                  {timerRunning && (
+                    <button
+                      onClick={() => setTimerRunning(false)}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      Pause
+                    </button>
+                  )}
+                  {!timerRunning && timer > 0 && (
+                    <button
+                      onClick={() => setTimerRunning(true)}
+                      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors"
+                    >
+                      Resume
+                    </button>
+                  )}
                 </div>
               )}
 

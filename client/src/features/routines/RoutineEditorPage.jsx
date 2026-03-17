@@ -8,7 +8,7 @@ import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { Plus, GripVertical, Trash2, ArrowLeft, Info } from 'lucide-react';
+import { Plus, GripVertical, Trash2, ArrowLeft, Info, Eye } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -72,6 +72,8 @@ export default function RoutineEditorPage() {
   const [newStep, setNewStep] = useState({ title: '', description: '', durationMinutes: '', isOptional: false });
   const [saving, setSaving] = useState(false);
   const [daysOfWeek, setDaysOfWeek] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewData, setReviewData] = useState(null);
 
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -141,10 +143,7 @@ export default function RoutineEditorPage() {
     }
   };
 
-  const onSubmit = async (data) => {
-    setSaving(true);
-
-    // Auto-add any in-progress step the user typed but didn't click "Add Step"
+  const buildFinalSteps = () => {
     let finalSteps = [...steps];
     if (newStep.title.trim()) {
       finalSteps.push({
@@ -153,13 +152,28 @@ export default function RoutineEditorPage() {
         order: steps.length + 1,
         _tempId: Date.now(),
       });
+    }
+    return finalSteps;
+  };
+
+  const onSubmit = async (data) => {
+    // For new routines, show review first
+    if (!isEditing && !showReview) {
+      setReviewData({ ...data, daysOfWeek, steps: buildFinalSteps() });
+      setShowReview(true);
+      return;
+    }
+
+    setSaving(true);
+
+    let finalSteps = buildFinalSteps();
+    if (newStep.title.trim()) {
       setNewStep({ title: '', description: '', durationMinutes: '', isOptional: false });
     }
 
     try {
       if (isEditing) {
         await updateRoutine(id, { ...data, daysOfWeek });
-        // Add any new steps (ones without an id)
         for (const step of finalSteps) {
           if (!step.id) {
             await addStep(id, {
@@ -187,6 +201,34 @@ export default function RoutineEditorPage() {
       // error handling
     } finally {
       setSaving(false);
+      setShowReview(false);
+    }
+  };
+
+  const confirmCreate = async () => {
+    if (!reviewData) return;
+    setSaving(true);
+    try {
+      await createRoutine({
+        name: reviewData.name,
+        type: reviewData.type,
+        description: reviewData.description,
+        difficulty: reviewData.difficulty,
+        scheduledTime: reviewData.scheduledTime,
+        daysOfWeek: reviewData.daysOfWeek,
+        steps: reviewData.steps.map(({ _tempId, ...s }) => ({
+          title: s.title,
+          description: s.description || null,
+          durationMinutes: s.durationMinutes || null,
+          isOptional: s.isOptional,
+        })),
+      });
+      navigate('/routines');
+    } catch {
+      // error handling
+    } finally {
+      setSaving(false);
+      setShowReview(false);
     }
   };
 
@@ -330,13 +372,77 @@ export default function RoutineEditorPage() {
 
         <div className="flex gap-3">
           <Button type="submit" loading={saving} className="flex-1">
-            {isEditing ? 'Save Changes' : 'Create Routine'}
+            {isEditing ? 'Save Changes' : 'Review & Create'}
           </Button>
           <Button type="button" variant="outline" onClick={() => navigate('/routines')}>
             Cancel
           </Button>
         </div>
       </form>
+
+      {/* Review overlay for new routines */}
+      {showReview && reviewData && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowReview(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-display text-2xl text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary-500" /> Review Routine
+            </h2>
+
+            <div className="space-y-3 text-sm mb-6">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Name</span>
+                <span className="font-medium text-gray-900 dark:text-white">{reviewData.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Type</span>
+                <span className="font-medium text-gray-900 dark:text-white">{ROUTINE_TYPES[reviewData.type]}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Difficulty</span>
+                <span className="font-medium text-gray-900 dark:text-white">{DIFFICULTY_TIERS[reviewData.difficulty]?.label}</span>
+              </div>
+              {reviewData.scheduledTime && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Time</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{reviewData.scheduledTime}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">Days</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {reviewData.daysOfWeek.length === 7 ? 'Every day' : reviewData.daysOfWeek.map((d) => dayLabels[d]).join(', ')}
+                </span>
+              </div>
+
+              {reviewData.steps.length > 0 && (
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                  <p className="text-gray-500 mb-2">Steps ({reviewData.steps.length})</p>
+                  <div className="space-y-2">
+                    {reviewData.steps.map((step, i) => (
+                      <div key={step.id || step._tempId || i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="text-gray-900 dark:text-white">{step.title}</span>
+                        {step.durationMinutes && <span className="text-xs text-gray-400 ml-auto">{step.durationMinutes} min</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button onClick={confirmCreate} loading={saving} className="flex-1">
+                Confirm & Create
+              </Button>
+              <Button variant="outline" onClick={() => setShowReview(false)}>
+                Edit
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 }

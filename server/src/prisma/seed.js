@@ -153,7 +153,7 @@ async function main() {
       userId: user1.id,
       name: 'Quick Start Morning',
       type: 'MORNING',
-      description: 'The minimum viable morning routine — just 3 steps, ~10 min.',
+      description: 'The minimum viable morning routine — just 3 steps, Estimated 10 min.',
       difficulty: 'EASY',
       isDefault: true,
       isActive: false,

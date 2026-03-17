@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoutineStore } from '@/stores/routineStore';
@@ -6,15 +6,14 @@ import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import RoutineCard from '@/features/routines/RoutineCard';
-import { Flame, Trophy, TrendingUp, Zap, Plus, Award } from 'lucide-react';
+import { Flame, Trophy, TrendingUp, Zap, Plus, Award, HelpCircle, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { getBadgeIcon } from '@/lib/badgeIcons';
 import { xpForLevel } from '../../../../shared/constants.js';
-import { format, subDays } from 'date-fns';
+import { format, startOfWeek, addDays } from 'date-fns';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions, deleteRoutine } = useRoutineStore();
+  const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions } = useRoutineStore();
   const { badges, fetchBadges, stats, fetchStats } = useGamificationStore();
   const navigate = useNavigate();
 
@@ -37,6 +36,8 @@ export default function DashboardPage() {
     (r) => r.isActive && r.daysOfWeek.includes(dayOfWeek)
   );
 
+  const [expandedId, setExpandedId] = useState(null);
+
   const getCompletion = (routineId) =>
     todayCompletions.find((c) => c.routineId === routineId);
 
@@ -45,9 +46,10 @@ export default function DashboardPage() {
     .filter((b) => b.earned)
     .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))[0];
 
-  // Weekly heatmap (last 7 days)
+  // Weekly heatmap (Mon–Sun of current week)
+  const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = subDays(new Date(), 6 - i);
+    const date = addDays(monday, i);
     const key = format(date, 'yyyy-MM-dd');
     const entry = stats?.heatmap?.find((h) => h.date === key);
     return {
@@ -59,11 +61,23 @@ export default function DashboardPage() {
 
   return (
     <PageWrapper className="max-w-6xl mx-auto px-4 py-8 pb-24">
-      <div className="mb-8">
-        <h1 className="font-display text-3xl text-gray-900 dark:text-white">
-          Good {getTimeOfDay()}, {user.username}
-        </h1>
-        <p className="text-gray-500 mt-1">Here&apos;s your progress today</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-3xl text-gray-900 dark:text-white">
+            Good {getTimeOfDay()}, {user.username}
+          </h1>
+          <p className="text-gray-500 mt-1">Here&apos;s your progress today</p>
+        </div>
+        <button
+          onClick={() => {
+            localStorage.removeItem('rf_tour_completed');
+            navigate('/welcome');
+          }}
+          className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+          title="View tutorial"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Stats grid */}
@@ -134,7 +148,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">This Week</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
-              Full Stats
+              See Full Stats
             </Button>
           </div>
           <div className="flex items-end gap-2 justify-between">
@@ -209,18 +223,57 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {todaysRoutines.map((routine) => (
-            <RoutineCard
-              key={routine.id}
-              routine={routine}
-              completion={getCompletion(routine.id)}
-              onStart={(r) => navigate(`/routines/${r.id}/run`)}
-              onEdit={(r) => navigate(`/routines/${r.id}/edit`)}
-              onDelete={(r) => {
-                if (window.confirm(`Delete "${r.name}"?`)) deleteRoutine(r.id);
-              }}
-            />
-          ))}
+          {todaysRoutines.map((routine) => {
+            const completion = getCompletion(routine.id);
+            const isCompleted = completion?.completedAt != null;
+            const isExpanded = expandedId === routine.id;
+            const totalMin = routine.steps?.reduce((sum, s) => sum + (s.durationMinutes || 0), 0) || 0;
+
+            return (
+              <Card
+                key={routine.id}
+                className={`cursor-pointer transition-all ${isCompleted ? 'ring-2 ring-success-400' : ''}`}
+                onClick={() => !isCompleted && setExpandedId(isExpanded ? null : routine.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{routine.name}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {routine.steps?.length || 0} steps{totalMin > 0 ? ` · Estimated ${totalMin} min` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isCompleted ? (
+                      <span className="text-xs font-bold text-success-500 bg-success-50 dark:bg-success-900/20 px-2 py-1 rounded-full">Done</span>
+                    ) : (
+                      isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+
+                {isExpanded && !isCompleted && (
+                  <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+                    <div className="space-y-2 mb-4">
+                      {routine.steps?.map((step, i) => (
+                        <div key={step.id} className="flex items-center gap-2 text-sm">
+                          <span className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="text-gray-700 dark:text-gray-300">{step.title}</span>
+                          {step.durationMinutes && (
+                            <span className="text-xs text-gray-400 ml-auto">{step.durationMinutes} min</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/routines/${routine.id}/run`); }}>
+                      <Play className="w-4 h-4 mr-1" /> Start Routine
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
     </PageWrapper>

@@ -246,6 +246,7 @@ export const useRoutineStore = create((set, get) => ({
     if (isGuest()) {
       const today = new Date().toISOString().split('T')[0];
       const all = loadGuestCompletions();
+      // Only return completions from today — previous days are historical
       set({ todayCompletions: all.filter((c) => c.date === today) });
       return;
     }

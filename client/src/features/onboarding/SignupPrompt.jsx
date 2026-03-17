@@ -19,6 +19,7 @@ export default function SignupPrompt() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="min-h-screen flex items-center justify-center px-4 bg-surface-light dark:bg-surface-dark"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">

@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/authStore';
-import { useThemeStore } from '@/stores/themeStore';
+import { useThemeStore, PASTEL_COLORS, ACCENT_COLORS } from '@/stores/themeStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
 
 export default function SettingsPage() {
   const { user, isGuest, logout, isPro, upgradePlan } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, primaryColor, accentColor, setPrimaryColor, setAccentColor } = useThemeStore();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const userIsPro = isPro();
 
@@ -91,6 +91,52 @@ export default function SettingsPage() {
             </div>
           </button>
         </div>
+
+        {/* Primary Color */}
+        <div className="mt-6">
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Primary Color</p>
+          <p className="text-xs text-gray-500 mb-3">Used for buttons, progress bars, and highlights</p>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(PASTEL_COLORS).map(([name, palette]) => (
+              <button
+                key={name}
+                onClick={() => setPrimaryColor(name)}
+                className={`w-9 h-9 rounded-full border-2 transition-all ${
+                  primaryColor === name ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: palette['500'] }}
+                title={name}
+              >
+                {primaryColor === name && (
+                  <Check className="w-4 h-4 text-white mx-auto" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Accent Color */}
+        <div className="mt-6">
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Accent Color</p>
+          <p className="text-xs text-gray-500 mb-3">Used for streaks, badges, and special elements</p>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(ACCENT_COLORS).map(([name, palette]) => (
+              <button
+                key={name}
+                onClick={() => setAccentColor(name)}
+                className={`w-9 h-9 rounded-full border-2 transition-all ${
+                  accentColor === name ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: palette['500'] }}
+                title={name}
+              >
+                {accentColor === name && (
+                  <Check className="w-4 h-4 text-white mx-auto" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
       </Card>
 
       {/* Subscription */}
@@ -163,7 +209,9 @@ export default function SettingsPage() {
           <Shield className="w-5 h-5 text-gray-400" />
           Account
         </h2>
-        <Button variant="outline" onClick={logout} className="w-full">
+        <Button variant="outline" onClick={() => {
+          if (window.confirm('Are you sure you want to sign out?')) logout();
+        }} className="w-full">
           Sign Out
         </Button>
       </Card>

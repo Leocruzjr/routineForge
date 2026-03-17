@@ -31,7 +31,7 @@ export default function Navbar() {
       )}
 
       {/* Top navbar */}
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 pt-safe">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Flame className="w-7 h-7 text-primary-500" />
@@ -66,7 +66,7 @@ export default function Navbar() {
                 })}
               </div>
 
-              <div className="hidden sm:flex items-center gap-2">
+              <Link to="/progress" className="hidden sm:flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <span className="text-sm font-mono text-primary-600 dark:text-primary-400">
                   Lv.{user.level}
                 </span>
@@ -74,7 +74,7 @@ export default function Navbar() {
                   {isGuest ? 'Guest' : user.username}
                   {userIsPro && <Crown className="w-3.5 h-3.5 text-primary-500" />}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={toggleTheme}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
@@ -85,7 +85,9 @@ export default function Navbar() {
               <Link to="/settings" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
                 <Settings className="w-4 h-4" />
               </Link>
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button variant="ghost" size="sm" onClick={() => {
+                if (window.confirm('Are you sure you want to sign out?')) logout();
+              }}>
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -95,7 +97,7 @@ export default function Navbar() {
 
       {/* Mobile bottom nav */}
       {user && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 pb-safe">
           <div className="flex items-center justify-around h-16">
             {navLinks.map(({ to, label, icon: Icon }) => {
               const isActive = location.pathname === to;

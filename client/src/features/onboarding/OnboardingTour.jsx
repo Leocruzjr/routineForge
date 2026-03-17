@@ -58,9 +58,9 @@ export default function OnboardingTour({ onComplete }) {
       <div className="absolute top-6 right-6">
         <button
           onClick={() => { skipTour(); onComplete(); }}
-          className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-xl transition-colors"
         >
-          Skip
+          Skip Tutorial
         </button>
       </div>
 
@@ -72,7 +72,7 @@ export default function OnboardingTour({ onComplete }) {
       </div>
 
       {/* Navigation */}
-      <div className="w-full max-w-md pb-12">
+      <div className="w-full max-w-md" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 3rem)' }}>
         {/* Progress dots */}
         <div className="flex justify-center gap-2 mb-8">
           {Array.from({ length: totalSteps }).map((_, i) => (
