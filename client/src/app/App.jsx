@@ -42,6 +42,16 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function WelcomeRoute({ children }) {
+  const { user, isLoading } = useAuthStore();
+
+  if (isLoading) return <LoadingSpinner />;
+  // If user is already logged in, send them home instead of showing tour again
+  if (user) return <Navigate to="/" replace />;
+
+  return children;
+}
+
 function GuestRoute({ children }) {
   const { user, isGuest, isLoading } = useAuthStore();
 
@@ -68,7 +78,9 @@ export default function App() {
       {!hideNavbar && <BetaBanner />}
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/welcome" element={<OnboardingPage />} />
+          <Route path="/welcome" element={
+            <WelcomeRoute><OnboardingPage /></WelcomeRoute>
+          } />
 
           <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />

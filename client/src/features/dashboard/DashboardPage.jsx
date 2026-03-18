@@ -6,7 +6,7 @@ import { useRoutineStore } from '@/stores/routineStore';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
-import { Flame, Plus, Check, Circle, ChevronRight, ChevronDown, Clock, SkipForward, Crosshair, Zap } from 'lucide-react';
+import { Flame, Plus, Check, Minus, ChevronRight, ChevronDown, Clock, SkipForward, Crosshair, Zap } from 'lucide-react';
 import { xpForLevel } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
 import LevelUpModal from '@/components/ui/LevelUpModal';
@@ -253,6 +253,7 @@ export default function DashboardPage() {
               const checkedCount = Object.values(routineStatuses).filter((s) => s === 'completed').length;
               const totalSteps = routine.steps?.length || 0;
               const totalMin = routine.steps?.reduce((sum, s) => sum + (s.durationMinutes || 0), 0) || 0;
+              const allChecked = checkedCount === totalSteps && totalSteps > 0;
 
               return (
                 <div key={routine.id}>
@@ -267,11 +268,13 @@ export default function DashboardPage() {
                     disabled={isCompleted}
                   >
                     {isCompleted ? (
-                      <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center flex-shrink-0">
                         <Check className="w-3.5 h-3.5 text-white" />
                       </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                      <div className="w-6 h-6 rounded-lg border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                        <Minus className="w-3 h-3 text-gray-300 dark:text-gray-600" />
+                      </div>
                     )}
 
                     <div className="flex-1 min-w-0">
@@ -319,11 +322,11 @@ export default function DashboardPage() {
                                     className="flex-shrink-0"
                                   >
                                     {isDone ? (
-                                      <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+                                      <div className="w-5 h-5 rounded-md bg-primary-500 flex items-center justify-center">
                                         <Check className="w-3 h-3 text-white" />
                                       </div>
                                     ) : (
-                                      <Circle className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                                      <div className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-600" />
                                     )}
                                   </button>
                                   <span className={`text-sm flex-1 ${
@@ -352,12 +355,14 @@ export default function DashboardPage() {
                                 Check all
                               </button>
                             )}
-                            <button
-                              onClick={() => navigate(`/routines/${routine.id}/run`)}
-                              className="text-xs text-gray-400 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2C2C2E] transition-colors flex items-center gap-1"
-                            >
-                              <Crosshair className="w-3 h-3" /> Focus mode
-                            </button>
+                            {!allChecked && (
+                              <button
+                                onClick={() => navigate(`/routines/${routine.id}/run`)}
+                                className="text-xs text-gray-400 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2C2C2E] transition-colors flex items-center gap-1"
+                              >
+                                <Crosshair className="w-3 h-3" /> Focus mode
+                              </button>
+                            )}
                             <div className="flex-1" />
                             {checkedCount > 0 && (
                               <Button
