@@ -228,12 +228,20 @@ export default function DashboardPage() {
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
             Today{todaysRoutines.length > 0 ? ` · ${completedToday}/${todaysRoutines.length}` : ''}
           </h2>
-          <button
-            onClick={() => navigate('/routines')}
-            className="text-xs text-primary-500 font-medium flex items-center gap-0.5"
-          >
-            All <ChevronRight className="w-3 h-3" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/routines/new')}
+              className="text-xs text-primary-500 font-medium flex items-center gap-0.5"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add
+            </button>
+            <button
+              onClick={() => navigate('/routines')}
+              className="text-xs text-gray-400 font-medium flex items-center gap-0.5"
+            >
+              All <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
         {todaysRoutines.length === 0 ? (
