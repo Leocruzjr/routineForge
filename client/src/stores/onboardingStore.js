@@ -5,7 +5,7 @@ const TOUR_KEY = 'rf_tour_completed';
 export const useOnboardingStore = create((set) => ({
   hasSeenTour: localStorage.getItem(TOUR_KEY) === 'true',
   currentStep: 0,
-  totalSteps: 4,
+  totalSteps: 3,
 
   nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, state.totalSteps - 1) })),
   prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 0) })),

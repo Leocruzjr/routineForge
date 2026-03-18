@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
-import { Trophy, ShoppingBag, Zap } from 'lucide-react';
+import { Trophy, Zap } from 'lucide-react';
 import { xpForLevel } from '../../../../shared/constants.js';
 
 export default function LevelUpModal({ isOpen, levelData, onClose }) {
-  const navigate = useNavigate();
   const [barFilled, setBarFilled] = useState(false);
   const [showLevel, setShowLevel] = useState(false);
 
@@ -46,7 +44,7 @@ export default function LevelUpModal({ isOpen, levelData, onClose }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ type: 'spring', damping: 20, delay: 0.1 }}
-          className="relative bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center overflow-hidden"
+          className="relative bg-white dark:bg-[#1C1C1E] rounded-2xl max-w-sm w-full p-8 shadow-2xl text-center overflow-hidden"
         >
           {/* Glow effect */}
           <div className="absolute inset-0 bg-gradient-to-b from-primary-500/10 to-transparent pointer-events-none" />
@@ -133,13 +131,6 @@ export default function LevelUpModal({ isOpen, levelData, onClose }) {
             <Button className="w-full" onClick={onClose}>
               Continue
             </Button>
-            <button
-              onClick={() => { onClose(); navigate('/shop'); }}
-              className="flex items-center justify-center gap-1.5 w-full text-sm text-primary-500 hover:text-primary-600 font-medium py-2 transition-colors"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Spend XP at the Shop
-            </button>
           </motion.div>
         </motion.div>
       </div>

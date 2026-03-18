@@ -5,7 +5,7 @@ import Button from './Button';
 const PRO_PERKS = [
   { icon: Infinity, text: 'Unlimited active routines' },
   { icon: BarChart3, text: 'Full 90-day stats & heatmap' },
-  { icon: Shield, text: 'Premium badges & rewards' },
+  { icon: Shield, text: 'Priority support & early features' },
   { icon: Download, text: 'Export your progress data' },
 ];
 

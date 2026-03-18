@@ -1,17 +1,17 @@
 import { useAuthStore } from '@/stores/authStore';
-import { useThemeStore, PASTEL_COLORS, ACCENT_COLORS } from '@/stores/themeStore';
+import { useThemeStore } from '@/stores/themeStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import UpgradeModal from '@/components/ui/UpgradeModal';
 import { useState } from 'react';
-import { User, Mail, Globe, Shield, Sun, Moon, Palette, Crown, Check } from 'lucide-react';
+import { User, Mail, Globe, Shield, Sun, Moon, Crown, Check } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
 
 export default function SettingsPage() {
   const { user, isGuest, logout, isPro, upgradePlan } = useAuthStore();
-  const { theme, toggleTheme, primaryColor, accentColor, setPrimaryColor, setAccentColor } = useThemeStore();
+  const { theme, toggleTheme } = useThemeStore();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const userIsPro = isPro();
@@ -62,10 +62,7 @@ export default function SettingsPage() {
 
       {/* Appearance */}
       <Card className="mb-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Palette className="w-5 h-5 text-gray-400" />
-          Appearance
-        </h2>
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Appearance</h2>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">Dark Mode</p>
@@ -92,52 +89,6 @@ export default function SettingsPage() {
               )}
             </div>
           </button>
-        </div>
-
-        {/* Primary Color (App Background) */}
-        <div className="mt-6">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Primary Color</p>
-          <p className="text-xs text-gray-500 mb-3">Changes app background and main accent</p>
-          <div className="flex gap-3">
-            {Object.entries(PASTEL_COLORS).map(([key, palette]) => (
-              <button
-                key={key}
-                onClick={() => setPrimaryColor(key)}
-                className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
-                  primaryColor === key ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-700' : 'border-transparent'
-                }`}
-              >
-                <div
-                  className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-600"
-                  style={{ backgroundColor: palette.bg }}
-                />
-                <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{palette.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Accent Color (Modal/Card Background) */}
-        <div className="mt-6">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Accent Color</p>
-          <p className="text-xs text-gray-500 mb-3">Changes modals, cards, and highlights</p>
-          <div className="flex gap-3">
-            {Object.entries(ACCENT_COLORS).map(([key, palette]) => (
-              <button
-                key={key}
-                onClick={() => setAccentColor(key)}
-                className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
-                  accentColor === key ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-700' : 'border-transparent'
-                }`}
-              >
-                <div
-                  className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-600"
-                  style={{ backgroundColor: palette.cardBg }}
-                />
-                <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{palette.name}</span>
-              </button>
-            ))}
-          </div>
         </div>
       </Card>
 

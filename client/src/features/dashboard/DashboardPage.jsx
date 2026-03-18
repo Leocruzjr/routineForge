@@ -1,32 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoutineStore } from '@/stores/routineStore';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
-import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { Flame, Trophy, TrendingUp, Zap, Plus, Award, HelpCircle, ChevronDown, ChevronUp, Play } from 'lucide-react';
-import { getBadgeIcon } from '@/lib/badgeIcons';
+import { Flame, Plus, Check, Circle, ChevronRight, ChevronDown, Clock, SkipForward, Crosshair, Zap } from 'lucide-react';
 import { xpForLevel } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
 import LevelUpModal from '@/components/ui/LevelUpModal';
+import { fireCompletionConfetti, fireLevelUpConfetti } from '@/lib/confetti';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions } = useRoutineStore();
-  const { badges, fetchBadges, stats, fetchStats } = useGamificationStore();
+  const { routines, todayCompletions, fetchRoutines, fetchTodayCompletions, startRun, completeStep, finishRun } = useRoutineStore();
+  const { fetchStats } = useGamificationStore();
   const navigate = useNavigate();
-
   const { checkAuth } = useAuthStore();
 
   useEffect(() => {
-    checkAuth(); // Refresh user data (XP, level) on every dashboard visit
+    checkAuth();
     fetchRoutines();
     fetchTodayCompletions();
-    fetchBadges();
     fetchStats();
-  }, [checkAuth, fetchRoutines, fetchTodayCompletions, fetchBadges, fetchStats]);
+  }, [checkAuth, fetchRoutines, fetchTodayCompletions, fetchStats]);
 
   const currentLevelXp = xpForLevel(user.level);
   const nextLevelXp = xpForLevel(user.level + 1);
@@ -34,7 +32,7 @@ export default function DashboardPage() {
   const neededXp = nextLevelXp - currentLevelXp;
   const progressPct = neededXp > 0 ? Math.min((progressXp / neededXp) * 100, 100) : 100;
 
-  // Only show today's scheduled routines, sorted: incomplete first, by time relevance
+  // Today's routines sorted: incomplete first, by time relevance
   const dayOfWeek = new Date().getDay();
   const hour = new Date().getHours();
   const todaysRoutines = routines
@@ -42,30 +40,25 @@ export default function DashboardPage() {
     .sort((a, b) => {
       const aCompleted = todayCompletions.find((c) => c.routineId === a.id)?.completedAt != null;
       const bCompleted = todayCompletions.find((c) => c.routineId === b.id)?.completedAt != null;
-      // Incomplete routines first
       if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
-      // Among incomplete, sort by time-of-day relevance
       if (!aCompleted && !bCompleted) {
-        const aTime = parseScheduledTime(a.scheduledTime);
-        const bTime = parseScheduledTime(b.scheduledTime);
-        // Closer to current hour = more relevant = comes first
-        const aDist = Math.abs(aTime - hour);
-        const bDist = Math.abs(bTime - hour);
-        return aDist - bDist;
+        return Math.abs(parseScheduledTime(a.scheduledTime) - hour) - Math.abs(parseScheduledTime(b.scheduledTime) - hour);
       }
       return 0;
     });
 
   const [expandedId, setExpandedId] = useState(null);
+  const [activeCompletions, setActiveCompletions] = useState({}); // { routineId: completionRecord }
+  const [stepStatuses, setStepStatuses] = useState({}); // { routineId: { stepId: 'completed'|'skipped' } }
+  const [finishingId, setFinishingId] = useState(null);
   const [levelUpData, setLevelUpData] = useState(null);
 
-  // Check for pending level-up from routine completion
+  // Check for pending level-up
   useEffect(() => {
     const pending = localStorage.getItem('rf_pending_levelup');
     if (pending) {
       try {
         const data = JSON.parse(pending);
-        // Small delay so the dashboard renders first
         const t = setTimeout(() => setLevelUpData(data), 600);
         localStorage.removeItem('rf_pending_levelup');
         return () => clearTimeout(t);
@@ -78,257 +71,348 @@ export default function DashboardPage() {
   const getCompletion = (routineId) =>
     todayCompletions.find((c) => c.routineId === routineId);
 
-  // Most recent earned badge
-  const recentBadge = badges
-    .filter((b) => b.earned)
-    .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))[0];
+  const completedToday = todaysRoutines.filter(
+    (r) => getCompletion(r.id)?.completedAt != null
+  ).length;
 
-  // Weekly heatmap (Mon–Sun of current week)
+  // Expand and start a run
+  const handleExpand = async (routine) => {
+    if (expandedId === routine.id) {
+      setExpandedId(null);
+      return;
+    }
+
+    setExpandedId(routine.id);
+
+    // Start run if we don't have one yet
+    if (!activeCompletions[routine.id]) {
+      try {
+        const { completion, resumed } = await startRun(routine.id);
+        setActiveCompletions((prev) => ({ ...prev, [routine.id]: completion }));
+
+        if (resumed && completion.stepCompletions) {
+          const statuses = {};
+          completion.stepCompletions.forEach((sc) => {
+            if (sc.completed) statuses[sc.stepId] = 'completed';
+            else if (sc.skipped) statuses[sc.stepId] = 'skipped';
+          });
+          setStepStatuses((prev) => ({ ...prev, [routine.id]: statuses }));
+        } else {
+          setStepStatuses((prev) => ({ ...prev, [routine.id]: {} }));
+        }
+      } catch {
+        // If start fails, still expand to show steps
+        setStepStatuses((prev) => ({ ...prev, [routine.id]: {} }));
+      }
+    }
+  };
+
+  const toggleStep = async (routine, step) => {
+    const comp = activeCompletions[routine.id];
+    if (!comp) return;
+
+    const routineStatuses = stepStatuses[routine.id] || {};
+    const wasCompleted = routineStatuses[step.id] === 'completed';
+
+    const newStatuses = { ...routineStatuses };
+    if (wasCompleted) {
+      delete newStatuses[step.id];
+    } else {
+      newStatuses[step.id] = 'completed';
+    }
+
+    setStepStatuses((prev) => ({ ...prev, [routine.id]: newStatuses }));
+
+    completeStep(comp.id, {
+      stepId: step.id,
+      completed: !wasCompleted,
+      skipped: false,
+      timeSpentMs: null,
+    });
+  };
+
+  const completeAll = async (routine) => {
+    const comp = activeCompletions[routine.id];
+    if (!comp) return;
+
+    const newStatuses = {};
+    for (const step of routine.steps) {
+      newStatuses[step.id] = 'completed';
+      completeStep(comp.id, {
+        stepId: step.id,
+        completed: true,
+        skipped: false,
+        timeSpentMs: null,
+      });
+    }
+    setStepStatuses((prev) => ({ ...prev, [routine.id]: newStatuses }));
+  };
+
+  const handleFinish = async (routine) => {
+    const comp = activeCompletions[routine.id];
+    if (!comp || finishingId) return;
+
+    setFinishingId(routine.id);
+    try {
+      const result = await finishRun(comp.id);
+
+      if (result.leveledUp) {
+        fireLevelUpConfetti();
+        localStorage.setItem('rf_pending_levelup', JSON.stringify({
+          newLevel: result.newLevel,
+          newTotalXp: result.newTotalXp,
+        }));
+      } else {
+        fireCompletionConfetti();
+      }
+
+      // Refresh data
+      checkAuth();
+      fetchTodayCompletions();
+      setExpandedId(null);
+
+      // Show level up after a beat
+      if (result.leveledUp) {
+        setTimeout(() => {
+          const pending = localStorage.getItem('rf_pending_levelup');
+          if (pending) {
+            setLevelUpData(JSON.parse(pending));
+            localStorage.removeItem('rf_pending_levelup');
+          }
+        }, 600);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setFinishingId(null);
+    }
+  };
+
+  // Week dots
   const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(monday, i);
-    const key = format(date, 'yyyy-MM-dd');
-    const entry = stats?.heatmap?.find((h) => h.date === key);
-    return {
-      label: format(date, 'EEE'),
-      date: key,
-      pct: entry?.completionPct ?? null,
-    };
-  });
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <PageWrapper className="max-w-6xl mx-auto px-4 py-8 pb-24">
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="font-display text-3xl text-gray-900 dark:text-white">
-            Good {getTimeOfDay()}, {user.username}
-          </h1>
-          <p className="text-gray-500 mt-1">Here&apos;s your progress today</p>
-        </div>
-        <button
-          onClick={() => {
-            localStorage.removeItem('rf_tour_completed');
-            navigate('/welcome');
-          }}
-          className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-          title="View tutorial"
-        >
-          <HelpCircle className="w-5 h-5" />
-        </button>
+    <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
+      {/* Greeting */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+          {getGreeting()}
+        </h1>
+        <p className="text-gray-400 mt-0.5 text-sm">{user.username}</p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="flex items-center gap-3">
-          <div className="p-2.5 bg-accent-100 dark:bg-accent-900/30 rounded-xl">
-            <Flame className="w-6 h-6 text-accent-500" />
+      {/* Streak + Level row */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3">
+          <Flame className="w-5 h-5 text-[#FF3B30]" />
+          <span className="text-lg font-bold font-mono text-gray-900 dark:text-white">{user.currentStreak}</span>
+        </div>
+        <div className="flex-1 bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-gray-500">Lv. {user.level}</span>
+            <span className="text-[10px] font-mono text-gray-400">{progressXp}/{neededXp} XP</span>
           </div>
-          <div>
-            <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{user.currentStreak}</p>
-            <p className="text-xs text-gray-500">Day Streak</p>
+          <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+            <div
+              className="bg-primary-500 h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-        </Card>
-
-        <Card className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
-            <Zap className="w-6 h-6 text-primary-500" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{user.totalXp.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">Total XP</p>
-          </div>
-        </Card>
-
-        <Card className="flex items-center gap-3">
-          <div className="p-2.5 bg-secondary-100 dark:bg-secondary-900/30 rounded-xl">
-            <Trophy className="w-6 h-6 text-secondary-500" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">Lv.{user.level}</p>
-            <p className="text-xs text-gray-500">Current Level</p>
-          </div>
-        </Card>
-
-        <Card className="flex items-center gap-3">
-          <div className="p-2.5 bg-success-100 dark:bg-success-900/30 rounded-xl">
-            <TrendingUp className="w-6 h-6 text-success-500" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{user.longestStreak}</p>
-            <p className="text-xs text-gray-500">Best Streak</p>
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* XP Progress Bar */}
-      <Card className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Level {user.level}
-          </span>
-          <span className="text-sm font-mono text-gray-500">
-            {progressXp} / {neededXp} XP
-          </span>
+      {/* Today's Routines */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+            Today{todaysRoutines.length > 0 ? ` · ${completedToday}/${todaysRoutines.length}` : ''}
+          </h2>
+          <button
+            onClick={() => navigate('/routines')}
+            className="text-xs text-primary-500 font-medium flex items-center gap-0.5"
+          >
+            All <ChevronRight className="w-3 h-3" />
+          </button>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-          <div
-            className="bg-gradient-to-r from-primary-400 to-primary-600 h-3 rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-      </Card>
 
-      {/* Weekly heatmap + recent badge */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-        {/* 7-day heatmap */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">This Week</h3>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/progress')}>
-              See Full Stats
+        {todaysRoutines.length === 0 ? (
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-8 text-center">
+            <p className="text-gray-400 mb-4 text-sm">No routines for today</p>
+            <Button size="sm" onClick={() => navigate('/routines')}>
+              <Plus className="w-4 h-4 mr-1" /> Add Routine
             </Button>
           </div>
-          <div className="flex items-end gap-2 justify-between">
-            {weekDays.map((day) => {
-              const height = day.pct != null ? Math.max(day.pct * 100, 8) : 8;
-              const color = day.pct == null
-                ? 'bg-gray-200 dark:bg-gray-700'
-                : day.pct >= 0.7
-                  ? 'bg-success-500'
-                  : day.pct > 0
-                    ? 'bg-success-300'
-                    : 'bg-gray-200 dark:bg-gray-700';
+        ) : (
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl overflow-hidden">
+            {todaysRoutines.map((routine, i) => {
+              const serverCompletion = getCompletion(routine.id);
+              const isCompleted = serverCompletion?.completedAt != null;
+              const isExpanded = expandedId === routine.id;
+              const routineStatuses = stepStatuses[routine.id] || {};
+              const checkedCount = Object.values(routineStatuses).filter((s) => s === 'completed').length;
+              const totalSteps = routine.steps?.length || 0;
+              const totalMin = routine.steps?.reduce((sum, s) => sum + (s.durationMinutes || 0), 0) || 0;
 
               return (
-                <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
-                  <div
-                    className={`w-full rounded-lg ${color} transition-all duration-300`}
-                    style={{ height: `${height}px`, minHeight: '8px', maxHeight: '64px' }}
-                  />
-                  <span className="text-[10px] text-gray-400">{day.label}</span>
+                <div key={routine.id}>
+                  {i > 0 && <div className="h-px bg-gray-100 dark:bg-[#38383A] ml-4" />}
+
+                  {/* Routine header row */}
+                  <button
+                    onClick={() => !isCompleted && handleExpand(routine)}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-gray-50 dark:active:bg-[#2C2C2E] ${
+                      isCompleted ? 'opacity-50' : ''
+                    }`}
+                    disabled={isCompleted}
+                  >
+                    {isCompleted ? (
+                      <div className="w-6 h-6 rounded-full bg-primary-500 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3.5 h-3.5 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[15px] font-medium ${
+                        isCompleted ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'
+                      }`}>
+                        {routine.name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {totalSteps} steps{totalMin > 0 ? ` · ${totalMin} min` : ''}
+                      </p>
+                    </div>
+
+                    {!isCompleted && (
+                      <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDown className="w-4 h-4 text-gray-300" />
+                      </motion.div>
+                    )}
+                  </button>
+
+                  {/* Expanded checklist */}
+                  <AnimatePresence>
+                    {isExpanded && !isCompleted && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4">
+                          {/* Steps */}
+                          <div className="space-y-0.5 mb-4">
+                            {routine.steps?.map((step) => {
+                              const isDone = routineStatuses[step.id] === 'completed';
+                              const isSkipped = routineStatuses[step.id] === 'skipped';
+
+                              return (
+                                <div
+                                  key={step.id}
+                                  className="flex items-center gap-3 py-2"
+                                >
+                                  <button
+                                    onClick={() => toggleStep(routine, step)}
+                                    className="flex-shrink-0"
+                                  >
+                                    {isDone ? (
+                                      <div className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-white" />
+                                      </div>
+                                    ) : (
+                                      <Circle className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+                                    )}
+                                  </button>
+                                  <span className={`text-sm flex-1 ${
+                                    isDone ? 'text-gray-400 line-through' : isSkipped ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'
+                                  }`}>
+                                    {step.title}
+                                    {step.isOptional && <span className="text-gray-400 text-xs ml-1">optional</span>}
+                                  </span>
+                                  {step.durationMinutes && !isDone && (
+                                    <span className="text-[11px] text-gray-400 font-mono flex-shrink-0">
+                                      {step.durationMinutes}m
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            {checkedCount < totalSteps && (
+                              <button
+                                onClick={() => completeAll(routine)}
+                                className="text-xs text-primary-500 font-medium px-3 py-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors"
+                              >
+                                Check all
+                              </button>
+                            )}
+                            <button
+                              onClick={() => navigate(`/routines/${routine.id}/run`)}
+                              className="text-xs text-gray-400 font-medium px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2C2C2E] transition-colors flex items-center gap-1"
+                            >
+                              <Crosshair className="w-3 h-3" /> Focus mode
+                            </button>
+                            <div className="flex-1" />
+                            {checkedCount > 0 && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleFinish(routine)}
+                                loading={finishingId === routine.id}
+                              >
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
           </div>
-        </Card>
-
-        {/* Recent badge */}
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Latest Badge</h3>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/badges')}>
-              See All Badges
-            </Button>
-          </div>
-          {recentBadge ? (
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
-                {(() => {
-                  const Icon = getBadgeIcon(recentBadge.icon);
-                  return <Icon className="w-7 h-7 text-primary-500" />;
-                })()}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">{recentBadge.name}</p>
-                <p className="text-xs text-gray-500">{recentBadge.description}</p>
-                <p className="text-xs text-primary-500 font-mono mt-1">+{recentBadge.xpReward} XP</p>
-                {recentBadge.earnedAt && (
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Earned {format(new Date(recentBadge.earnedAt), 'MM/dd/yy')}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <Award className="w-7 h-7 text-gray-300" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">No badges yet</p>
-                <p className="text-xs text-gray-400">Complete routines to earn your first badge!</p>
-              </div>
-            </div>
-          )}
-        </Card>
+        )}
       </div>
 
-      {/* Today's Routines */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-xl text-gray-900 dark:text-white">Today&apos;s Routines</h2>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/routines')}>
-          View All
-        </Button>
-      </div>
-
-      {todaysRoutines.length === 0 ? (
-        <Card className="text-center py-8">
-          <p className="text-gray-500 mb-4">No routines scheduled for today.</p>
-          <Button size="sm" onClick={() => navigate('/routines')}>
-            <Plus className="w-4 h-4 mr-1" /> Add a Routine
-          </Button>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {todaysRoutines.map((routine) => {
-            const completion = getCompletion(routine.id);
-            const isCompleted = completion?.completedAt != null;
-            const isExpanded = expandedId === routine.id;
-            const totalMin = routine.steps?.reduce((sum, s) => sum + (s.durationMinutes || 0), 0) || 0;
-
+      {/* Week dots */}
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3 mt-4">
+        <div className="flex items-center justify-between">
+          {Array.from({ length: 7 }, (_, i) => {
+            const date = addDays(monday, i);
+            const key = format(date, 'yyyy-MM-dd');
+            const isToday = key === today;
+            const isPast = date < new Date() && !isToday;
             return (
-              <Card
-                key={routine.id}
-                className={`cursor-pointer transition-all ${isCompleted ? 'ring-2 ring-success-400' : ''}`}
-                onClick={() => !isCompleted && setExpandedId(isExpanded ? null : routine.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{routine.name}</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {routine.steps?.length || 0} steps{totalMin > 0 ? ` · Estimated ${totalMin} min` : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isCompleted ? (
-                      <span className="text-xs font-bold text-success-500 bg-success-50 dark:bg-success-900/20 px-2 py-1 rounded-full">Done</span>
-                    ) : (
-                      isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />
-                    )}
-                  </div>
-                </div>
-
-                {isExpanded && !isCompleted && (
-                  <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                    <div className="space-y-2 mb-4">
-                      {routine.steps?.map((step, i) => (
-                        <div key={step.id} className="flex items-center gap-2 text-sm">
-                          <span className="w-5 h-5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                            {i + 1}
-                          </span>
-                          <span className="text-gray-700 dark:text-gray-300">{step.title}</span>
-                          {step.durationMinutes && (
-                            <span className="text-xs text-gray-400 ml-auto">{step.durationMinutes} min</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/routines/${routine.id}/run`); }}>
-                      <Play className="w-4 h-4 mr-1" /> Start Routine
-                    </Button>
-                  </div>
-                )}
-              </Card>
+              <div key={key} className="flex flex-col items-center gap-1.5">
+                <span className={`text-[10px] font-medium ${isToday ? 'text-primary-500' : 'text-gray-400'}`}>
+                  {format(date, 'EEE')}
+                </span>
+                <div className={`w-3 h-3 rounded-full ${
+                  isToday
+                    ? completedToday === todaysRoutines.length && todaysRoutines.length > 0
+                      ? 'bg-primary-500'
+                      : 'ring-2 ring-primary-500 ring-inset'
+                    : isPast
+                      ? 'bg-gray-300 dark:bg-gray-600'
+                      : 'bg-gray-200 dark:bg-gray-700'
+                }`} />
+              </div>
             );
           })}
         </div>
-      )}
+      </div>
+
       <LevelUpModal
         isOpen={!!levelUpData}
         levelData={levelUpData}
         onClose={() => {
           setLevelUpData(null);
-          // Refresh user data to update all level sections
           checkAuth();
         }}
       />
@@ -336,11 +420,11 @@ export default function DashboardPage() {
   );
 }
 
-function getTimeOfDay() {
+function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 function parseScheduledTime(timeStr) {
@@ -348,3 +432,4 @@ function parseScheduledTime(timeStr) {
   const [h] = timeStr.split(':').map(Number);
   return h || 12;
 }
+

@@ -4,10 +4,20 @@
 
 @layer base {
   :root {
-    --color-primary: #F59E0B;
-    --color-secondary: #312E81;
-    --color-success: #10B981;
-    --color-accent: #F97316;
+    --color-primary: #007AFF;
+    --color-secondary: #5856D6;
+    --color-success: #34C759;
+    --color-accent: #FF9500;
+  }
+
+  body {
+    background-color: #F2F2F7;
+  }
+
+  .dark body,
+  body.dark,
+  html.dark body {
+    background-color: #000000;
   }
 }
 

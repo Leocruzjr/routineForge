@@ -12,8 +12,6 @@ import DashboardPage from '@/features/dashboard/DashboardPage';
 import RoutineListPage from '@/features/routines/RoutineListPage';
 import RoutineEditorPage from '@/features/routines/RoutineEditorPage';
 import RoutineRunnerPage from '@/features/routines/RoutineRunnerPage';
-import BadgesPage from '@/features/gamification/BadgesPage';
-import RewardsShopPage from '@/features/gamification/RewardsShopPage';
 import ProgressPage from '@/features/progress/ProgressPage';
 import SettingsPage from '@/features/settings/SettingsPage';
 import OnboardingPage from '@/features/onboarding/OnboardingPage';
@@ -32,7 +30,6 @@ function ProtectedRoute({ children }) {
 
   if (isLoading) return <LoadingSpinner />;
 
-  // First-time user who hasn't seen the tour
   if (!user && !hasSeenTour) {
     return <Navigate to="/welcome" replace />;
   }
@@ -48,7 +45,6 @@ function GuestRoute({ children }) {
   const { user, isGuest, isLoading } = useAuthStore();
 
   if (isLoading) return <LoadingSpinner />;
-  // Allow guest users through to register/login so they can create a real account
   if (user && !isGuest) return <Navigate to="/" replace />;
 
   return children;
@@ -62,7 +58,6 @@ export default function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // Hide navbar on onboarding and auth pages
   const hideNavbar = ['/welcome', '/login', '/register'].includes(location.pathname);
 
   return (
@@ -72,35 +67,16 @@ export default function App() {
       {!hideNavbar && <BetaBanner />}
       <AnimatePresence mode="wait">
         <Routes>
-          {/* Onboarding */}
           <Route path="/welcome" element={<OnboardingPage />} />
 
-          {/* Auth */}
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <LoginPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <GuestRoute>
-                <RegisterPage />
-              </GuestRoute>
-            }
-          />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
-          {/* Protected pages */}
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/routines" element={<ProtectedRoute><RoutineListPage /></ProtectedRoute>} />
           <Route path="/routines/new" element={<ProtectedRoute><RoutineEditorPage /></ProtectedRoute>} />
           <Route path="/routines/:id/edit" element={<ProtectedRoute><RoutineEditorPage /></ProtectedRoute>} />
           <Route path="/routines/:id/run" element={<ProtectedRoute><RoutineRunnerPage /></ProtectedRoute>} />
-          <Route path="/badges" element={<ProtectedRoute><BadgesPage /></ProtectedRoute>} />
-          <Route path="/shop" element={<ProtectedRoute><RewardsShopPage /></ProtectedRoute>} />
           <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 

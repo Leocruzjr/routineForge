@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import TourSlide from './TourSlide';
 import Button from '@/components/ui/Button';
-import { Flame, ListChecks, Zap, Award } from 'lucide-react';
+import { Flame, ListChecks, Zap } from 'lucide-react';
 
 const slides = [
   {
@@ -27,15 +27,7 @@ const slides = [
     title: 'Earn XP & Level Up',
     subtitle: 'Every step counts.',
     description:
-      'Complete routines to earn XP, climb levels, and unlock rewards. Streak multipliers reward your consistency — the longer you go, the more you earn.',
-  },
-  {
-    icon: Award,
-    iconColor: 'accent',
-    title: 'Collect Badges',
-    subtitle: 'Celebrate your progress.',
-    description:
-      'Unlock 17 unique badges as you hit milestones. Streak freezes protect you on off days — because life happens, and that\'s okay.',
+      'Complete routines to earn XP, climb levels, and track your consistency. The longer you go, the more you earn.',
   },
 ];
 
