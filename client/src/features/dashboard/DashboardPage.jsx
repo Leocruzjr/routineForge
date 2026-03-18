@@ -20,11 +20,10 @@ export default function DashboardPage() {
   const { checkAuth } = useAuthStore();
 
   useEffect(() => {
-    checkAuth();
     fetchRoutines();
     fetchTodayCompletions();
     fetchStats();
-  }, [checkAuth, fetchRoutines, fetchTodayCompletions, fetchStats]);
+  }, [fetchRoutines, fetchTodayCompletions, fetchStats]);
 
   const currentLevelXp = xpForLevel(user.level);
   const nextLevelXp = xpForLevel(user.level + 1);

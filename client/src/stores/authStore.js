@@ -43,14 +43,7 @@ export const useAuthStore = create((set, get) => ({
           localStorage.removeItem(GUEST_KEY);
         }
       }
-      // Only clear user if we were in the initial loading state
-      // Don't nuke a user that was just set by login()
-      const { isLoading: wasLoading } = get();
-      if (wasLoading) {
-        set({ user: null, isGuest: false, isLoading: false, error: null });
-      } else {
-        set({ isLoading: false });
-      }
+      set({ user: null, isGuest: false, isLoading: false, error: null });
     }
   },
 
