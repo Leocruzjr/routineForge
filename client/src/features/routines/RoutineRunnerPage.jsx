@@ -270,10 +270,20 @@ export default function RoutineRunnerPage() {
           )}
 
           <div className="flex gap-3">
-            <Button className="flex-1" onClick={() => navigate('/')}>
+            <Button className="flex-1" onClick={() => {
+              if (leveledUp) {
+                localStorage.setItem('rf_pending_levelup', JSON.stringify({ newLevel, newTotalXp }));
+              }
+              navigate('/');
+            }}>
               Dashboard
             </Button>
-            <Button variant="outline" className="flex-1" onClick={() => navigate('/routines')}>
+            <Button variant="outline" className="flex-1" onClick={() => {
+              if (leveledUp) {
+                localStorage.setItem('rf_pending_levelup', JSON.stringify({ newLevel, newTotalXp }));
+              }
+              navigate('/routines');
+            }}>
               My Routines
             </Button>
           </div>

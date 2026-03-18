@@ -124,7 +124,7 @@ export default function Navbar() {
       <ConfirmModal
         isOpen={showLogout}
         title="Sign Out"
-        message="Are you sure you want to sign out? Any unsaved progress will be lost."
+        message="Sign out?"
         confirmLabel="Sign Out"
         cancelLabel="Cancel"
         onConfirm={() => { setShowLogout(false); logout(); }}

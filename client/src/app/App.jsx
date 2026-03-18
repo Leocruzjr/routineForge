@@ -45,10 +45,11 @@ function ProtectedRoute({ children }) {
 }
 
 function GuestRoute({ children }) {
-  const { user, isLoading } = useAuthStore();
+  const { user, isGuest, isLoading } = useAuthStore();
 
   if (isLoading) return <LoadingSpinner />;
-  if (user) return <Navigate to="/" replace />;
+  // Allow guest users through to register/login so they can create a real account
+  if (user && !isGuest) return <Navigate to="/" replace />;
 
   return children;
 }

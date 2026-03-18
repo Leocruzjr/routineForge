@@ -10,6 +10,7 @@ import { Flame, Trophy, TrendingUp, Zap, Plus, Award, HelpCircle, ChevronDown, C
 import { getBadgeIcon } from '@/lib/badgeIcons';
 import { xpForLevel } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
+import LevelUpModal from '@/components/ui/LevelUpModal';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -33,13 +34,46 @@ export default function DashboardPage() {
   const neededXp = nextLevelXp - currentLevelXp;
   const progressPct = neededXp > 0 ? Math.min((progressXp / neededXp) * 100, 100) : 100;
 
-  // Only show today's scheduled routines
+  // Only show today's scheduled routines, sorted: incomplete first, by time relevance
   const dayOfWeek = new Date().getDay();
-  const todaysRoutines = routines.filter(
-    (r) => r.isActive && r.daysOfWeek.includes(dayOfWeek)
-  );
+  const hour = new Date().getHours();
+  const todaysRoutines = routines
+    .filter((r) => r.isActive && r.daysOfWeek.includes(dayOfWeek))
+    .sort((a, b) => {
+      const aCompleted = todayCompletions.find((c) => c.routineId === a.id)?.completedAt != null;
+      const bCompleted = todayCompletions.find((c) => c.routineId === b.id)?.completedAt != null;
+      // Incomplete routines first
+      if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+      // Among incomplete, sort by time-of-day relevance
+      if (!aCompleted && !bCompleted) {
+        const aTime = parseScheduledTime(a.scheduledTime);
+        const bTime = parseScheduledTime(b.scheduledTime);
+        // Closer to current hour = more relevant = comes first
+        const aDist = Math.abs(aTime - hour);
+        const bDist = Math.abs(bTime - hour);
+        return aDist - bDist;
+      }
+      return 0;
+    });
 
   const [expandedId, setExpandedId] = useState(null);
+  const [levelUpData, setLevelUpData] = useState(null);
+
+  // Check for pending level-up from routine completion
+  useEffect(() => {
+    const pending = localStorage.getItem('rf_pending_levelup');
+    if (pending) {
+      try {
+        const data = JSON.parse(pending);
+        // Small delay so the dashboard renders first
+        const t = setTimeout(() => setLevelUpData(data), 600);
+        localStorage.removeItem('rf_pending_levelup');
+        return () => clearTimeout(t);
+      } catch {
+        localStorage.removeItem('rf_pending_levelup');
+      }
+    }
+  }, []);
 
   const getCompletion = (routineId) =>
     todayCompletions.find((c) => c.routineId === routineId);
@@ -289,6 +323,15 @@ export default function DashboardPage() {
           })}
         </div>
       )}
+      <LevelUpModal
+        isOpen={!!levelUpData}
+        levelData={levelUpData}
+        onClose={() => {
+          setLevelUpData(null);
+          // Refresh user data to update all level sections
+          checkAuth();
+        }}
+      />
     </PageWrapper>
   );
 }
@@ -298,4 +341,10 @@ function getTimeOfDay() {
   if (hour < 12) return 'morning';
   if (hour < 17) return 'afternoon';
   return 'evening';
+}
+
+function parseScheduledTime(timeStr) {
+  if (!timeStr) return 12;
+  const [h] = timeStr.split(':').map(Number);
+  return h || 12;
 }
