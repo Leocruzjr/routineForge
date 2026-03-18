@@ -66,7 +66,7 @@ export default function RoutineListPage() {
   return (
     <PageWrapper className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl text-gray-900 dark:text-white">My Routines</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Routines</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
             Browse Templates

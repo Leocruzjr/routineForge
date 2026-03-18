@@ -18,7 +18,7 @@ export default function SettingsPage() {
 
   return (
     <PageWrapper className="max-w-2xl mx-auto px-4 py-8 pb-24">
-      <h1 className="font-display text-3xl text-gray-900 dark:text-white mb-8">Settings</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Settings</h1>
 
       {/* Profile */}
       <Card className="mb-6">

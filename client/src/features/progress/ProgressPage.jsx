@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import PageWrapper from '@/components/layout/PageWrapper';
-import { Flame, Trophy, Target, Star } from 'lucide-react';
+import { Flame, Trophy, CheckCircle, Star } from 'lucide-react';
 import { format, startOfWeek, addDays } from 'date-fns';
 
 
@@ -42,8 +42,8 @@ export default function ProgressPage() {
       {/* Key stats */}
       <div className="grid grid-cols-3 gap-3 mb-8">
         <StatPill icon={Flame} value={user.currentStreak} label="Streak" />
-        <StatPill icon={Target} value={stats ? `${Math.round(stats.avgCompletionPct * 100)}%` : '—'} label="Avg" />
-        <StatPill icon={Trophy} value={stats?.totalCompleted ?? '—'} label="Done" />
+        <StatPill icon={CheckCircle} value={stats?.totalCompleted ?? '—'} label="Total" />
+        <StatPill icon={Trophy} value={`Lv.${user.level}`} label="Level" />
       </div>
 
       {/* This week's activity */}

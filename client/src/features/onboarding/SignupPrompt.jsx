@@ -24,7 +24,7 @@ export default function SignupPrompt() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Flame className="w-12 h-12 text-primary-500 mx-auto mb-3" />
-          <h1 className="font-display text-3xl text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Ready to begin?
           </h1>
           <p className="text-gray-500">

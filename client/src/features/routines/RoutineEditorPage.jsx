@@ -241,7 +241,7 @@ export default function RoutineEditorPage() {
         <ArrowLeft className="w-4 h-4" /> Back to routines
       </button>
 
-      <h1 className="font-display text-3xl text-gray-900 dark:text-white mb-6">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
         {isEditing ? 'Edit Routine' : 'Create Routine'}
       </h1>
 
@@ -384,7 +384,7 @@ export default function RoutineEditorPage() {
       {showReview && reviewData && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowReview(false)}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-display text-2xl text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Eye className="w-5 h-5 text-primary-500" /> Review Routine
             </h2>
 

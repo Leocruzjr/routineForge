@@ -43,7 +43,7 @@ export default function TemplatePickerModal({ onClose }) {
         >
           <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 p-6 flex items-center justify-between">
             <div>
-              <h2 className="font-display text-2xl text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Science-Backed Templates
               </h2>
               <p className="text-sm text-gray-500 mt-1">Pick a routine backed by research. Customize it later.</p>

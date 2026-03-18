@@ -13,7 +13,7 @@ export default function TourSlide({ icon: Icon, iconColor, title, subtitle, desc
         <Icon className={`w-12 h-12 text-${iconColor}-500`} />
       </div>
 
-      <h2 className="font-display text-3xl text-gray-900 dark:text-white mb-3">
+      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
         {title}
       </h2>
 

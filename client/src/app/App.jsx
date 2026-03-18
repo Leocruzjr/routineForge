@@ -14,6 +14,7 @@ import RoutineEditorPage from '@/features/routines/RoutineEditorPage';
 import RoutineRunnerPage from '@/features/routines/RoutineRunnerPage';
 import ProgressPage from '@/features/progress/ProgressPage';
 import SettingsPage from '@/features/settings/SettingsPage';
+import ResourcesPage from '@/features/resources/ResourcesPage';
 import OnboardingPage from '@/features/onboarding/OnboardingPage';
 
 function LoadingSpinner() {
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/routines/:id/edit" element={<ProtectedRoute><RoutineEditorPage /></ProtectedRoute>} />
           <Route path="/routines/:id/run" element={<ProtectedRoute><RoutineRunnerPage /></ProtectedRoute>} />
           <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
+          <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

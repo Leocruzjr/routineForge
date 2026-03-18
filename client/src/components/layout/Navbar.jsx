@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { Flame, LogOut, Home, ListChecks, BarChart3, Settings, UserPlus, Sun, Moon, Crown } from 'lucide-react';
+import { Flame, LogOut, Home, ListChecks, BarChart3, BookOpen, Settings, UserPlus, Sun, Moon, Crown } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { useThemeStore } from '@/stores/themeStore';
@@ -10,6 +10,7 @@ const navLinks = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/routines', label: 'Routines', icon: ListChecks },
   { to: '/progress', label: 'Progress', icon: BarChart3 },
+  { to: '/resources', label: 'Resources', icon: BookOpen },
 ];
 
 export default function Navbar() {
