@@ -1,10 +1,10 @@
-import { Check, Sun, Droplets, Dumbbell } from 'lucide-react';
+import { Check, Sun, Droplets, Dumbbell, Sunrise } from 'lucide-react';
 
 function ExampleRoutine() {
   return (
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
       <div className="flex items-center gap-2 mb-2.5">
-        <span className="text-sm">🌅</span>
+        <Sunrise className="w-4 h-4 text-accent-500" />
         <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Morning Routine</p>
         <span className="text-[10px] text-gray-400 ml-auto">3 steps · 15 min</span>
       </div>

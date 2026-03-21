@@ -5,7 +5,7 @@ import { useRoutineStore } from '@/stores/routineStore';
 import { useAuthStore } from '@/stores/authStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
-import { Check, SkipForward, Clock, X, Zap, Flame } from 'lucide-react';
+import { Check, SkipForward, Clock, X, Zap, Flame, PartyPopper, CheckCircle } from 'lucide-react';
 import { fireCompletionConfetti, fireLevelUpConfetti } from '@/lib/confetti';
 
 export default function RoutineRunnerPage() {
@@ -125,7 +125,12 @@ export default function RoutineRunnerPage() {
     return (
       <PageWrapper className="max-w-lg mx-auto px-4 py-12 pb-24 text-center">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', damping: 20 }}>
-          <div className="text-5xl mb-3">{leveledUp ? '🎉' : '✓'}</div>
+          <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center bg-primary-50 dark:bg-primary-900/20">
+            {leveledUp
+              ? <PartyPopper className="w-8 h-8 text-primary-500" />
+              : <CheckCircle className="w-8 h-8 text-success-500" />
+            }
+          </div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">{routine.name}</h1>
           <p className="text-gray-400 mb-6">Routine complete</p>
 

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquarePlus, X, Send, Bug, Lightbulb, Star } from 'lucide-react';
+import { MessageSquarePlus, X, Send, Bug, Lightbulb, Star, Heart } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/authStore';
+import { api } from '@/lib/api';
 
 const FEEDBACK_KEY = 'rf_feedback_history';
 const FEEDBACK_TYPES = [
@@ -45,16 +46,11 @@ export default function BetaBanner() {
       // localStorage full, ignore
     }
 
-    // Try to send to server if available
+    // Send to server
     try {
-      await fetch('/api/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(feedback),
-        credentials: 'include',
-      });
+      await api.post('/feedback', feedback);
     } catch {
-      // Server might not have this endpoint yet — that's fine, feedback is stored locally
+      // Server unavailable — feedback is stored locally as fallback
     }
 
     setSending(false);
@@ -108,7 +104,9 @@ export default function BetaBanner() {
 
               {submitted ? (
                 <div className="p-8 text-center">
-                  <div className="text-4xl mb-3">🙏</div>
+                  <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                    <Heart className="w-7 h-7 text-primary-500" />
+                  </div>
                   <p className="font-semibold text-gray-900 dark:text-white">Thanks for your feedback!</p>
                   <p className="text-sm text-gray-500 mt-1">We'll review it shortly.</p>
                 </div>

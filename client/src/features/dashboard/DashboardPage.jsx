@@ -6,7 +6,7 @@ import { useRoutineStore } from '@/stores/routineStore';
 import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
-import { Flame, Plus, Check, Minus, ChevronRight, ChevronDown, Crosshair, TrendingUp, Target, Zap, Sparkles } from 'lucide-react';
+import { Flame, Plus, Check, Minus, ChevronRight, ChevronDown, Crosshair, TrendingUp, Target, Zap, Sparkles, Sunrise, Moon, Dumbbell } from 'lucide-react';
 import { xpForLevel, getMilestoneTitle, getNextMilestone } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
 import LevelUpModal from '@/components/ui/LevelUpModal';
@@ -465,9 +465,9 @@ export default function DashboardPage() {
 // Quick template suggestions for new users
 function QuickTemplates({ navigate }) {
   const suggestions = [
-    { name: 'Morning Routine', desc: '5 steps · 20 min', icon: '🌅' },
-    { name: 'Bedtime Wind-Down', desc: '4 steps · 15 min', icon: '🌙' },
-    { name: 'Workout', desc: '6 steps · 30 min', icon: '💪' },
+    { name: 'Morning Routine', desc: '5 steps · 20 min', icon: Sunrise, color: 'text-accent-500 bg-accent-50 dark:bg-accent-900/20' },
+    { name: 'Bedtime Wind-Down', desc: '4 steps · 15 min', icon: Moon, color: 'text-secondary-500 bg-secondary-50 dark:bg-secondary-900/20' },
+    { name: 'Workout', desc: '6 steps · 30 min', icon: Dumbbell, color: 'text-success-500 bg-success-50 dark:bg-success-900/20' },
   ];
 
   return (
@@ -480,7 +480,9 @@ function QuickTemplates({ navigate }) {
             onClick={() => navigate('/routines')}
             className="w-full bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
           >
-            <span className="text-xl">{s.icon}</span>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${s.color}`}>
+              <s.icon className="w-4.5 h-4.5" />
+            </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{s.name}</p>
               <p className="text-xs text-gray-400">{s.desc}</p>
