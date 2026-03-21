@@ -7,7 +7,7 @@ import { useGamificationStore } from '@/stores/gamificationStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
 import { Flame, Plus, Check, Minus, ChevronRight, ChevronDown, Crosshair, TrendingUp, Target, Zap, Sparkles } from 'lucide-react';
-import { xpForLevel } from '../../../../shared/constants.js';
+import { xpForLevel, getMilestoneTitle, getNextMilestone } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
 import LevelUpModal from '@/components/ui/LevelUpModal';
 import PageTour from '@/components/ui/PageTour';
@@ -196,7 +196,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex-1 bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-gray-500">Lv. {user.level}</span>
+            <span className="text-xs font-semibold text-gray-500">Lv. {user.level} <span className="text-primary-500">{getMilestoneTitle(user.level)}</span></span>
             <span className="text-[10px] font-mono text-gray-400">{progressXp}/{neededXp} XP</span>
           </div>
           <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">

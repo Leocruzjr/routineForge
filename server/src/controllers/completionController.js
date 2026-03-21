@@ -203,7 +203,7 @@ export async function finishCompletion(req, res, next) {
     });
 
     // Update user XP and check level up
-    const { xpForLevel } = await import('../../../shared/constants.js');
+    const { xpForLevel, MILESTONE_REWARDS } = await import('../../../shared/constants.js');
     const newTotalXp = user.totalXp + totalXp;
     let newLevel = user.level;
     while (xpForLevel(newLevel + 1) <= newTotalXp) {
@@ -212,9 +212,25 @@ export async function finishCompletion(req, res, next) {
 
     const leveledUp = newLevel > user.level;
 
+    // Calculate streak shields earned from any milestone levels crossed
+    let milestoneShields = 0;
+    const milestoneRewards = [];
+    if (leveledUp) {
+      for (let lvl = user.level + 1; lvl <= newLevel; lvl++) {
+        if (MILESTONE_REWARDS[lvl]) {
+          milestoneShields += MILESTONE_REWARDS[lvl].streakShields;
+          milestoneRewards.push({ level: lvl, ...MILESTONE_REWARDS[lvl] });
+        }
+      }
+    }
+
     await prisma.user.update({
       where: { id: userId },
-      data: { totalXp: newTotalXp, level: newLevel },
+      data: {
+        totalXp: newTotalXp,
+        level: newLevel,
+        ...(milestoneShields > 0 && { streakFreezes: { increment: milestoneShields } }),
+      },
     });
 
     // Update streak
@@ -237,6 +253,7 @@ export async function finishCompletion(req, res, next) {
       newTotalXp,
       streak: streakResult,
       newBadges,
+      milestoneRewards,
     }));
   } catch (err) {
     next(err);

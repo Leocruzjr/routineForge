@@ -5,13 +5,13 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import UpgradeModal from '@/components/ui/UpgradeModal';
 import { useState } from 'react';
-import { User, Mail, Globe, Shield, Sun, Moon, Crown, Check } from 'lucide-react';
+import { User, Mail, Globe, Shield, Sun, Moon, Crown, Check, Lock, Palette } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
-import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
+import { FREE_TIER_LIMITS, ACCENT_THEMES, getUnlockedThemes } from '../../../../shared/constants.js';
 
 export default function SettingsPage() {
   const { user, isGuest, logout, isPro, upgradePlan } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, accentTheme, setAccentTheme } = useThemeStore();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const userIsPro = isPro();
@@ -90,6 +90,53 @@ export default function SettingsPage() {
             </div>
           </button>
         </div>
+      </Card>
+
+      {/* Accent Theme */}
+      <Card className="mb-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <Palette className="w-5 h-5 text-primary-500" />
+          Color Theme
+        </h2>
+        <div className="grid grid-cols-4 gap-3">
+          {Object.entries(ACCENT_THEMES).map(([key, t]) => {
+            const unlocked = user.level >= t.level;
+            const isActive = accentTheme === key;
+            return (
+              <button
+                key={key}
+                onClick={() => unlocked && setAccentTheme(key)}
+                disabled={!unlocked}
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all ${
+                  isActive
+                    ? 'bg-gray-100 dark:bg-gray-700 ring-2 ring-primary-500'
+                    : unlocked
+                      ? 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'bg-gray-50 dark:bg-gray-800 opacity-50'
+                }`}
+              >
+                <div
+                  className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-600 shadow-sm"
+                  style={{ backgroundColor: t.primary[500] }}
+                />
+                <span className="text-[10px] font-medium text-gray-600 dark:text-gray-300">{t.name}</span>
+                {!unlocked && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex items-center gap-0.5 bg-gray-900/70 text-white text-[9px] font-mono px-1.5 py-0.5 rounded-full">
+                      <Lock className="w-2.5 h-2.5" /> Lv.{t.level}
+                    </div>
+                  </div>
+                )}
+                {isActive && unlocked && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <Check className="w-3.5 h-3.5 text-primary-500" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-gray-400 mt-3">Unlock new themes by reaching milestone levels.</p>
       </Card>
 
       {/* Subscription */}

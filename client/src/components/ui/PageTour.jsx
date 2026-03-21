@@ -4,7 +4,8 @@ import { usePageTourStore } from '@/stores/pageTourStore';
 
 const PADDING = 8;
 const TOOLTIP_GAP = 12;
-const EDGE_MARGIN = 16;
+const EDGE_MARGIN = 12;
+const TOOLTIP_MAX_W = 340;
 
 function getRect(target) {
   const el = document.querySelector(`[data-tour="${target}"]`);
@@ -23,17 +24,21 @@ function getRect(target) {
 function getTooltipStyle(rect, tooltipEl) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const tooltipW = Math.min(TOOLTIP_MAX_W, vw - EDGE_MARGIN * 2);
 
   // Fallback: center on screen
   if (!rect) {
     return {
-      top: '50%', left: EDGE_MARGIN, right: EDGE_MARGIN,
-      transform: 'translateY(-50%)', placement: 'center',
-      arrowLeft: '50%',
+      top: '50%',
+      left: `${(vw - tooltipW) / 2}px`,
+      width: tooltipW,
+      transform: 'translateY(-50%)',
+      placement: 'center',
+      arrowLeft: tooltipW / 2,
     };
   }
 
-  const tooltipHeight = tooltipEl?.offsetHeight || 220;
+  const tooltipHeight = tooltipEl?.offsetHeight || 200;
   const spaceBelow = vh - rect.bottom - TOOLTIP_GAP;
   const spaceAbove = rect.top - TOOLTIP_GAP;
 
@@ -43,36 +48,31 @@ function getTooltipStyle(rect, tooltipEl) {
       ? 'above'
       : spaceBelow >= spaceAbove ? 'below' : 'above';
 
-  // Vertical position
+  // Vertical
   let top;
   if (placement === 'below') {
     top = rect.bottom + TOOLTIP_GAP;
-    // Clamp so tooltip doesn't go below viewport
-    if (top + tooltipHeight > vh - EDGE_MARGIN) {
-      top = vh - EDGE_MARGIN - tooltipHeight;
-    }
+    if (top + tooltipHeight > vh - EDGE_MARGIN) top = vh - EDGE_MARGIN - tooltipHeight;
   } else {
     top = rect.top - TOOLTIP_GAP - tooltipHeight;
-    // Clamp so tooltip doesn't go above viewport
-    if (top < EDGE_MARGIN) {
-      top = EDGE_MARGIN;
-    }
+    if (top < EDGE_MARGIN) top = EDGE_MARGIN;
   }
 
-  // Arrow points to center of highlighted element
+  // Horizontal — align tooltip center to target center, then clamp to viewport
   const targetCenterX = rect.left + rect.width / 2;
-  // Arrow position as px from left edge of tooltip (clamped to tooltip bounds)
-  const tooltipLeft = EDGE_MARGIN;
-  const tooltipWidth = vw - EDGE_MARGIN * 2;
-  const arrowLeft = Math.min(Math.max(targetCenterX - tooltipLeft, 24), tooltipWidth - 24);
+  let left = targetCenterX - tooltipW / 2;
+  left = Math.max(EDGE_MARGIN, Math.min(left, vw - tooltipW - EDGE_MARGIN));
+
+  // Arrow position relative to tooltip left edge
+  const arrowLeft = Math.min(Math.max(targetCenterX - left, 20), tooltipW - 20);
 
   return {
     top: `${top}px`,
-    left: EDGE_MARGIN,
-    right: EDGE_MARGIN,
+    left: `${left}px`,
+    width: tooltipW,
     transform: 'none',
     placement,
-    arrowLeft: `${arrowLeft}px`,
+    arrowLeft,
   };
 }
 
@@ -104,12 +104,10 @@ export default function PageTour({ pageKey, steps }) {
     }
   }, [pageKey, hasSeenTour]);
 
-  // Measure on step change and on scroll/resize
   useLayoutEffect(() => {
     if (!visible) return;
     measure();
 
-    // Scroll the target into view
     if (step?.target) {
       const el = document.querySelector(`[data-tour="${step.target}"]`);
       if (el) {
@@ -123,7 +121,6 @@ export default function PageTour({ pageKey, steps }) {
     }
   }, [visible, currentStep, measure, step?.target]);
 
-  // Re-measure once tooltip renders (so we know its height)
   useLayoutEffect(() => {
     if (tooltipRef && visible) measure();
   }, [tooltipRef, visible, measure]);
@@ -223,13 +220,13 @@ export default function PageTour({ pageKey, steps }) {
           style={{
             top: tooltipStyle.top,
             left: tooltipStyle.left,
-            right: tooltipStyle.right,
+            width: tooltipStyle.width,
             transform: tooltipStyle.transform,
             pointerEvents: 'auto',
           }}
           onClick={next}
         >
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-4 sm:p-5 shadow-2xl border border-gray-200 dark:border-gray-700/50 relative">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-4 shadow-2xl border border-gray-200 dark:border-gray-700/50 relative">
             {/* Arrow pointing to target */}
             {rect && (
               <div
@@ -238,7 +235,7 @@ export default function PageTour({ pageKey, steps }) {
                     ? '-top-1.5 border-l border-t'
                     : '-bottom-1.5 border-r border-b'
                 }`}
-                style={{ left: tooltipStyle.arrowLeft, transform: 'translateX(-50%) rotate(45deg)' }}
+                style={{ left: `${tooltipStyle.arrowLeft}px`, transform: 'translateX(-50%) rotate(45deg)' }}
               />
             )}
 
@@ -251,20 +248,20 @@ export default function PageTour({ pageKey, steps }) {
             </button>
 
             {/* Step counter */}
-            <p className="text-[11px] font-medium text-primary-500 mb-2">
+            <p className="text-[11px] font-medium text-primary-500 mb-1.5">
               {currentStep + 1} of {steps.length}
             </p>
 
             {/* Content */}
-            <h3 className="text-[15px] font-bold text-gray-900 dark:text-white mb-1 pr-14">
+            <h3 className="text-[14px] font-bold text-gray-900 dark:text-white mb-0.5 pr-14">
               {step.title}
             </h3>
-            <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+            <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
               {step.description}
             </p>
 
             {/* Optional custom content */}
-            {step.content && <div className="mb-4">{step.content}</div>}
+            {step.content && <div className="mb-3">{step.content}</div>}
 
             {/* Progress dots + nav */}
             <div className="flex items-center justify-between gap-2">

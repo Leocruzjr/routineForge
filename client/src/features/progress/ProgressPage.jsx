@@ -7,6 +7,7 @@ import { Flame, Trophy, CheckCircle, Star } from 'lucide-react';
 import PageTour from '@/components/ui/PageTour';
 import { progressTourSteps } from '@/lib/tourSteps';
 import { format, startOfWeek, addDays } from 'date-fns';
+import { getMilestoneTitle, getNextMilestone } from '../../../../shared/constants.js';
 
 
 export default function ProgressPage() {
@@ -45,7 +46,7 @@ export default function ProgressPage() {
       <div data-tour="progress-stats" className="grid grid-cols-3 gap-3 mb-8">
         <StatPill icon={Flame} value={user.currentStreak} label="Streak" />
         <StatPill icon={CheckCircle} value={stats?.totalCompleted ?? '—'} label="Total" />
-        <StatPill icon={Trophy} value={`Lv.${user.level}`} label="Level" />
+        <StatPill icon={Trophy} value={`Lv.${user.level}`} label={getMilestoneTitle(user.level)} />
       </div>
 
       {/* This week's activity */}

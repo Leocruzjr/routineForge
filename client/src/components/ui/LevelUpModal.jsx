@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
-import { Trophy, Zap } from 'lucide-react';
-import { xpForLevel } from '../../../../shared/constants.js';
+import { Trophy, Zap, Shield, Palette } from 'lucide-react';
+import { xpForLevel, getMilestoneTitle, MILESTONE_TITLES, MILESTONE_REWARDS, ACCENT_THEMES } from '../../../../shared/constants.js';
 
 export default function LevelUpModal({ isOpen, levelData, onClose }) {
   const [barFilled, setBarFilled] = useState(false);
@@ -29,6 +29,8 @@ export default function LevelUpModal({ isOpen, levelData, onClose }) {
   const progressXp = newTotalXp - currentLevelXp;
   const neededXp = nextLevelXp - currentLevelXp;
   const newProgressPct = neededXp > 0 ? Math.min((progressXp / neededXp) * 100, 100) : 0;
+  const milestoneTitle = getMilestoneTitle(newLevel);
+  const isNewMilestone = MILESTONE_TITLES.some((m) => m.level === newLevel);
 
   return (
     <AnimatePresence>
@@ -96,6 +98,20 @@ export default function LevelUpModal({ isOpen, levelData, onClose }) {
               </motion.span>
             </div>
 
+            {/* Milestone title */}
+            {isNewMilestone && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={showLevel ? { opacity: 1, scale: 1 } : {}}
+                transition={{ delay: 0.2, type: 'spring', damping: 12 }}
+                className="mb-4"
+              >
+                <span className="inline-block px-4 py-1.5 rounded-full bg-primary-50 dark:bg-primary-900/30 text-sm font-semibold text-primary-600 dark:text-primary-400">
+                  {milestoneTitle}
+                </span>
+              </motion.div>
+            )}
+
             {/* Animated XP bar — fills to 100% then resets to new progress */}
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
               <motion.div
@@ -120,6 +136,42 @@ export default function LevelUpModal({ isOpen, levelData, onClose }) {
               {progressXp} / {neededXp} XP to Level {newLevel + 1}
             </motion.p>
           </div>
+
+          {/* Milestone rewards */}
+          {isNewMilestone && MILESTONE_REWARDS[newLevel] && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={showLevel ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.3 }}
+              className="mb-6 space-y-2"
+            >
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Rewards unlocked</p>
+              <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5">
+                <div className="w-8 h-8 rounded-full bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-accent-500" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    +{MILESTONE_REWARDS[newLevel].streakShields} Streak Shield{MILESTONE_REWARDS[newLevel].streakShields > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-[11px] text-gray-400">Protects your streak for a missed day</p>
+                </div>
+              </div>
+              {MILESTONE_REWARDS[newLevel].theme && (
+                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: ACCENT_THEMES[MILESTONE_REWARDS[newLevel].theme]?.primary[500] + '20' }}>
+                    <Palette className="w-4 h-4" style={{ color: ACCENT_THEMES[MILESTONE_REWARDS[newLevel].theme]?.primary[500] }} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {ACCENT_THEMES[MILESTONE_REWARDS[newLevel].theme]?.name} Theme
+                    </p>
+                    <p className="text-[11px] text-gray-400">New color scheme in Settings</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
 
           {/* Action buttons */}
           <motion.div

@@ -16,6 +16,7 @@ import ProgressPage from '@/features/progress/ProgressPage';
 import SettingsPage from '@/features/settings/SettingsPage';
 import ResourcesPage from '@/features/resources/ResourcesPage';
 import OnboardingPage from '@/features/onboarding/OnboardingPage';
+import LevelUpTest from '@/features/settings/LevelUpTest';
 
 function LoadingSpinner() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/progress" element={<ProtectedRoute><ProgressPage /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/test/levelup" element={<ProtectedRoute><LevelUpTest /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
