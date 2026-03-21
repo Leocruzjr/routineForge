@@ -253,10 +253,10 @@ export default function PageTour({ pageKey, steps }) {
             </p>
 
             {/* Content */}
-            <h3 className="text-[14px] font-bold text-gray-900 dark:text-white mb-0.5 pr-14">
+            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 pr-14">
               {step.title}
             </h3>
-            <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
               {step.description}
             </p>
 

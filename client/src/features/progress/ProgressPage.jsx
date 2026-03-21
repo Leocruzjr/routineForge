@@ -8,6 +8,7 @@ import PageTour from '@/components/ui/PageTour';
 import { progressTourSteps } from '@/lib/tourSteps';
 import { format, startOfWeek, addDays } from 'date-fns';
 import { getMilestoneTitle, getNextMilestone } from '../../../../shared/constants.js';
+import CalendarHeatmap from './CalendarHeatmap';
 
 
 export default function ProgressPage() {
@@ -70,6 +71,13 @@ export default function ProgressPage() {
         </div>
       </Section>
       </div>
+
+      {/* Heatmap */}
+      {stats?.heatmap?.length > 0 && (
+        <Section title="Activity">
+          <CalendarHeatmap data={stats.heatmap} />
+        </Section>
+      )}
 
       {/* Top routine */}
       {topRoutine && (

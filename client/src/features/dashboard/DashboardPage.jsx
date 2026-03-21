@@ -229,7 +229,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Pick your first routine</h2>
             <p className="text-sm text-gray-500 mb-5">Start small — even one routine builds momentum.</p>
             <div className="flex gap-2 justify-center">
-              <Button size="sm" onClick={() => navigate('/routines/new')}>
+              <Button size="sm" onClick={() => navigate('/routines')}>
                 <Plus className="w-4 h-4 mr-1" /> Build Your Own
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/routines')}>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               </h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigate('/routines/new')}
+                  onClick={() => navigate('/routines')}
                   className="text-xs text-primary-500 font-medium flex items-center gap-0.5"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add
@@ -284,7 +284,7 @@ export default function DashboardPage() {
               <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-6 text-center">
                 <p className="text-gray-400 text-sm mb-1">No routines scheduled today</p>
                 <p className="text-xs text-gray-400 mb-4">Your next routines will show up here.</p>
-                <Button size="sm" onClick={() => navigate('/routines/new')}>
+                <Button size="sm" onClick={() => navigate('/routines')}>
                   <Plus className="w-4 h-4 mr-1" /> Add Routine
                 </Button>
               </div>
