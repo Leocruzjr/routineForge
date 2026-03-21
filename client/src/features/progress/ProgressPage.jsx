@@ -73,7 +73,7 @@ export default function ProgressPage() {
       </div>
 
       {/* Heatmap */}
-      <Section title="Activity">
+      <Section title="Monthly Activity" right={format(new Date(), 'MMMM yyyy')}>
         <CalendarHeatmap data={stats?.heatmap || []} />
       </Section>
 
