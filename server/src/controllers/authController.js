@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../prisma/client.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { apiResponse } from '../../../shared/constants.js';
+import { validateStreakOnLogin } from '../services/streakService.js';
 
 const SALT_ROUNDS = 10;
 
@@ -131,6 +132,9 @@ export async function refresh(req, res, next) {
  */
 export async function getMe(req, res, next) {
   try {
+    // Validate streak before returning user data (catches missed cron runs)
+    await validateStreakOnLogin(req.user.userId);
+
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
     });
