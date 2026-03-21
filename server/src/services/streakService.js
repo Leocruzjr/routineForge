@@ -39,31 +39,54 @@ export async function updateStreakOnCompletion(userId) {
   const todayIsStreak = await isStreakDay(userId, today);
   if (!todayIsStreak) return { currentStreak: user.currentStreak, longestStreak: user.longestStreak, streakFrozeUsed: false };
 
-  // Check if yesterday was a streak day or if the streak was already counting today
+  // Prevent double-counting: if there's already a completed routine today, streak was already updated
+  const todayCompletionCount = await prisma.routineCompletion.count({
+    where: { userId, date: today, completedAt: { not: null } },
+  });
+  if (todayCompletionCount > 1) {
+    return { currentStreak: user.currentStreak, longestStreak: user.longestStreak, streakFrozeUsed: false };
+  }
+
+  // Walk back from yesterday to determine if the streak is still connected
+  // Account for streak freezes covering missed days
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayWasStreak = await isStreakDay(userId, yesterday);
 
   let newStreak;
-  if (yesterdayWasStreak || user.currentStreak > 0) {
-    // Continue the streak — but only increment if we haven't already counted today
-    // Check if today was already counted by seeing if streak was updated today
+  if (yesterdayWasStreak) {
+    // Yesterday was active — continue the streak
     newStreak = user.currentStreak + 1;
   } else {
-    // Starting a fresh streak
-    newStreak = 1;
-  }
+    // Yesterday wasn't active — check if freezes cover the gap
+    let missedDays = 0;
+    let freezesNeeded = 0;
+    let gapCovered = false;
 
-  // Prevent double-counting: check if there's already a completion for today
-  // that was previously processed (streak already incremented)
-  const todayCompletionCount = await prisma.routineCompletion.count({
-    where: { userId, date: today, completedAt: { not: null } },
-  });
+    for (let i = 1; i <= 30; i++) {
+      const checkDate = new Date(today);
+      checkDate.setDate(checkDate.getDate() - i);
+      const wasStreak = await isStreakDay(userId, checkDate);
+      if (wasStreak) {
+        gapCovered = true;
+        break;
+      }
+      missedDays++;
+      freezesNeeded++;
+    }
 
-  // Only increment once per day — if multiple routines completed, don't double-count
-  if (todayCompletionCount > 1) {
-    // Already counted today, don't increment again
-    return { currentStreak: user.currentStreak, longestStreak: user.longestStreak, streakFrozeUsed: false };
+    if (gapCovered && freezesNeeded <= user.streakFreezes) {
+      // Freezes cover the gap — deduct them and continue streak
+      await prisma.user.update({
+        where: { id: userId },
+        data: { streakFreezes: user.streakFreezes - freezesNeeded },
+      });
+      newStreak = user.currentStreak + 1;
+      console.log(`[Streak] Used ${freezesNeeded} freeze(s) for ${userId} to bridge ${missedDays} missed day(s)`);
+    } else {
+      // Gap too large or no freezes — start fresh
+      newStreak = 1;
+    }
   }
 
   const newLongest = Math.max(newStreak, user.longestStreak);
