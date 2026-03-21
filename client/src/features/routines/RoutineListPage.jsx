@@ -12,6 +12,8 @@ import { Plus, Crown, Check, Minus, ChevronDown, Crosshair, Edit2, Trash2 } from
 import { FREE_TIER_LIMITS } from '../../../../shared/constants.js';
 import { fireCompletionConfetti, fireLevelUpConfetti } from '@/lib/confetti';
 import LevelUpModal from '@/components/ui/LevelUpModal';
+import PageTour from '@/components/ui/PageTour';
+import { routinesTourSteps } from '@/lib/tourSteps';
 
 export default function RoutineListPage() {
   const navigate = useNavigate();
@@ -247,9 +249,9 @@ export default function RoutineListPage() {
 
   return (
     <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
-      <div className="flex items-center justify-between mb-6">
+      <div data-tour="routines-header" className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Routines</h1>
-        <div className="flex gap-2">
+        <div data-tour="routines-actions" className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
             Templates
           </Button>
@@ -269,7 +271,7 @@ export default function RoutineListPage() {
       ) : (
         <>
           {activeRoutines.length === 0 && inactiveRoutines.length === 0 && (
-            <div className="text-center py-16">
+            <div data-tour="routines-list" className="text-center py-16">
               <p className="text-gray-500 text-sm mb-4">No routines yet</p>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => setShowTemplates(true)}>Start from Template</Button>
@@ -279,7 +281,7 @@ export default function RoutineListPage() {
           )}
 
           {activeRoutines.length > 0 && (
-            <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl overflow-hidden mb-6">
+            <div data-tour="routines-list" className="bg-white dark:bg-[#1C1C1E] rounded-2xl overflow-hidden mb-6">
               {activeRoutines.map((routine, i) => renderRoutineRow(routine, i, i > 0))}
             </div>
           )}
@@ -333,6 +335,7 @@ export default function RoutineListPage() {
         levelData={levelUpData}
         onClose={() => { setLevelUpData(null); checkAuth(); }}
       />
+      <PageTour pageKey="routines" steps={routinesTourSteps} />
     </PageWrapper>
   );
 }

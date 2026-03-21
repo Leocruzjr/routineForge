@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import PageWrapper from '@/components/layout/PageWrapper';
 import Button from '@/components/ui/Button';
 import { Plus, ExternalLink } from 'lucide-react';
+import PageTour from '@/components/ui/PageTour';
+import { resourcesTourSteps } from '@/lib/tourSteps';
 
 const articles = [
   {
@@ -70,6 +72,7 @@ export default function ResourcesPage() {
 
       {/* CTA to add a routine */}
       <motion.div
+        data-tour="resources-cta"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-primary-500 rounded-2xl p-6 mb-8 text-white"
@@ -87,6 +90,7 @@ export default function ResourcesPage() {
       </motion.div>
 
       {/* Articles */}
+      <div data-tour="resources-articles">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
         Worth reading
       </h2>
@@ -115,6 +119,8 @@ export default function ResourcesPage() {
           </motion.a>
         ))}
       </div>
+      </div>
+      <PageTour pageKey="resources" steps={resourcesTourSteps} />
     </PageWrapper>
   );
 }

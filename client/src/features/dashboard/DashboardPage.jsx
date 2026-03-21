@@ -10,6 +10,8 @@ import { Flame, Plus, Check, Minus, ChevronRight, ChevronDown, Crosshair, Trendi
 import { xpForLevel } from '../../../../shared/constants.js';
 import { format, startOfWeek, addDays } from 'date-fns';
 import LevelUpModal from '@/components/ui/LevelUpModal';
+import PageTour from '@/components/ui/PageTour';
+import { dashboardTourSteps } from '@/lib/tourSteps';
 import { fireCompletionConfetti, fireLevelUpConfetti } from '@/lib/confetti';
 
 export default function DashboardPage() {
@@ -179,7 +181,7 @@ export default function DashboardPage() {
   return (
     <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
       {/* Greeting */}
-      <div className="mb-6">
+      <div data-tour="dash-greeting" className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
           {getGreeting()}
         </h1>
@@ -187,7 +189,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Streak + Level row */}
-      <div className="flex items-center gap-3 mb-2">
+      <div data-tour="dash-streak-level" className="flex items-center gap-3 mb-2">
         <div className="flex items-center gap-2 bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-3">
           <Flame className="w-5 h-5 text-[#FF3B30]" />
           <span className="text-lg font-bold font-mono text-gray-900 dark:text-white">{user.currentStreak}</span>
@@ -219,7 +221,7 @@ export default function DashboardPage() {
 
       {/* First-time user: no routines */}
       {!hasRoutines ? (
-        <div className="mb-6">
+        <div data-tour="dash-routines" className="mb-6">
           <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl p-6 text-center mb-4">
             <div className="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-3">
               <Sparkles className="w-6 h-6 text-primary-500" />
@@ -240,7 +242,7 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* Today's Routines */}
-          <div className="mb-4">
+          <div data-tour="dash-routines" className="mb-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                 Today{todaysRoutines.length > 0 ? ` · ${completedToday}/${todaysRoutines.length}` : ''}
@@ -418,7 +420,7 @@ export default function DashboardPage() {
       )}
 
       {/* Weekly summary */}
-      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-4">
+      <div data-tour="dash-weekly" className="bg-white dark:bg-[#1C1C1E] rounded-2xl px-4 py-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">This week</h2>
           <span className="text-xs font-mono text-gray-400">
@@ -455,6 +457,7 @@ export default function DashboardPage() {
           checkAuth();
         }}
       />
+      <PageTour pageKey="dashboard" steps={dashboardTourSteps} />
     </PageWrapper>
   );
 }

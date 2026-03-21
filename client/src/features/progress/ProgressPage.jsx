@@ -4,6 +4,8 @@ import { useGamificationStore } from '@/stores/gamificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import PageWrapper from '@/components/layout/PageWrapper';
 import { Flame, Trophy, CheckCircle, Star } from 'lucide-react';
+import PageTour from '@/components/ui/PageTour';
+import { progressTourSteps } from '@/lib/tourSteps';
 import { format, startOfWeek, addDays } from 'date-fns';
 
 
@@ -40,13 +42,14 @@ export default function ProgressPage() {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Progress</h1>
 
       {/* Key stats */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div data-tour="progress-stats" className="grid grid-cols-3 gap-3 mb-8">
         <StatPill icon={Flame} value={user.currentStreak} label="Streak" />
         <StatPill icon={CheckCircle} value={stats?.totalCompleted ?? '—'} label="Total" />
         <StatPill icon={Trophy} value={`Lv.${user.level}`} label="Level" />
       </div>
 
       {/* This week's activity */}
+      <div data-tour="progress-weekly">
       <Section title="This week" right={weekTotalXp > 0 ? `${weekTotalXp} XP` : null}>
         <div className="flex items-end gap-2 h-24">
           {weekDays.map((day) => {
@@ -65,6 +68,7 @@ export default function ProgressPage() {
           })}
         </div>
       </Section>
+      </div>
 
       {/* Top routine */}
       {topRoutine && (
@@ -82,6 +86,7 @@ export default function ProgressPage() {
       )}
 
       {/* Streak details */}
+      <div data-tour="progress-streak">
       <Section title="Streak">
         <div className="flex items-center gap-6">
           <div>
@@ -95,8 +100,9 @@ export default function ProgressPage() {
           </div>
         </div>
       </Section>
+      </div>
 
-      {/**/}
+      <PageTour pageKey="progress" steps={progressTourSteps} />
     </PageWrapper>
   );
 }
