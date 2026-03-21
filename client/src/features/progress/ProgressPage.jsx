@@ -73,11 +73,9 @@ export default function ProgressPage() {
       </div>
 
       {/* Heatmap */}
-      {stats?.heatmap?.length > 0 && (
-        <Section title="Activity">
-          <CalendarHeatmap data={stats.heatmap} />
-        </Section>
-      )}
+      <Section title="Activity">
+        <CalendarHeatmap data={stats?.heatmap || []} />
+      </Section>
 
       {/* Top routine */}
       {topRoutine && (
