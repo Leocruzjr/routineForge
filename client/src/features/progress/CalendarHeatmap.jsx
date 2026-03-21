@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, startOfYear, getDay } from 'date-fns';
 
 const intensityColors = [
-  'bg-gray-100 dark:bg-gray-800',       // no data
+  'bg-gray-200 dark:bg-gray-700',       // no data
   'bg-success-100 dark:bg-success-900',  // 1-25%
   'bg-success-300 dark:bg-success-700',  // 26-50%
   'bg-success-400 dark:bg-success-600',  // 51-75%
@@ -19,10 +19,9 @@ function getIntensity(pct) {
   return 5;
 }
 
-/**
- * Monthly calendar heatmap for routine completions.
- * Shows the current month as a grid with day numbers on the left.
- */
+const CELL = 10;
+const GAP = 2;
+
 export default function CalendarHeatmap({ data }) {
   const dataMap = useMemo(() => {
     const map = new Map();
@@ -33,108 +32,140 @@ export default function CalendarHeatmap({ data }) {
   }, [data]);
 
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const totalDays = days.length;
+  const yearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate() + 1);
+  const start = startOfWeek(yearAgo, { weekStartsOn: 0 });
+  const days = eachDayOfInterval({ start, end: today });
 
-  // Build a 7-column grid (Sun–Sat), rows = weeks
-  const firstDayOfWeek = getDay(monthStart); // 0=Sun
+  // Group into week columns
   const weeks = [];
-  let currentWeek = Array(firstDayOfWeek).fill(null); // pad start
-
+  let week = [];
   for (const day of days) {
-    currentWeek.push(day);
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-      currentWeek = [];
+    week.push(day);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
     }
   }
-  // Pad last week
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) currentWeek.push(null);
-    weeks.push(currentWeek);
-  }
+  if (week.length > 0) weeks.push(week);
 
-  const weekdayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  // Month labels — place on the first week where the 1st of that month appears
+  const monthLabels = [];
+  const seenMonths = new Set();
+  weeks.forEach((w, i) => {
+    for (const d of w) {
+      if (!d) continue;
+      const m = d.getMonth();
+      if (d.getDate() <= 7 && !seenMonths.has(m) && d >= yearAgo) {
+        seenMonths.add(m);
+        monthLabels.push({ index: i, label: format(d, 'MMM') });
+        break;
+      }
+    }
+  });
 
-  // Day labels on the left — show 1, 15, and last day of month
-  const labelDays = new Set([1, 15, totalDays]);
+  const rowLabels = ['', 'M', '', 'W', '', 'F', ''];
+  const labelW = 14;
+  const totalW = labelW + weeks.length * (CELL + GAP) - GAP;
+  const totalH = 7 * (CELL + GAP) - GAP + 14;
 
   return (
     <div>
-      {/* Weekday headers */}
-      <div className="grid grid-cols-[28px_repeat(7,1fr)] gap-1 mb-1">
-        <div />
-        {weekdayHeaders.map((d, i) => (
-          <div key={i} className="text-center">
-            <span className="text-[10px] font-medium text-gray-400">{d}</span>
-          </div>
+      <svg viewBox={`0 0 ${totalW} ${totalH}`} className="block w-full h-auto">
+        {/* Month labels */}
+        {monthLabels.map(({ index, label }) => (
+          <text
+            key={label + index}
+            x={labelW + index * (CELL + GAP)}
+            y={9}
+            className="fill-gray-400"
+            fontSize={9}
+            fontFamily="ui-monospace, monospace"
+          >
+            {label}
+          </text>
         ))}
-      </div>
 
-      {/* Calendar grid */}
-      {weeks.map((week, wi) => {
-        // Find the first real day in this week to determine label
-        const firstDayInWeek = week.find((d) => d !== null);
-        const lastDayInWeek = [...week].reverse().find((d) => d !== null);
-        const dayNum = firstDayInWeek ? firstDayInWeek.getDate() : null;
-        const lastDayNum = lastDayInWeek ? lastDayInWeek.getDate() : null;
+        {/* Row labels */}
+        {rowLabels.map((label, i) => (
+          label && (
+            <text
+              key={i}
+              x={0}
+              y={14 + i * (CELL + GAP) + CELL - 1}
+              className="fill-gray-400"
+              fontSize={8}
+              fontFamily="ui-monospace, monospace"
+            >
+              {label}
+            </text>
+          )
+        ))}
 
-        // Show label if this row contains day 1, 15, or last day
-        let rowLabel = '';
-        if (dayNum !== null) {
-          for (const ld of labelDays) {
-            if (dayNum <= ld && lastDayNum >= ld) {
-              rowLabel = String(ld);
-              break;
-            }
-          }
-        }
+        {/* Squares */}
+        {weeks.map((w, wi) =>
+          w.map((day, di) => {
+            if (!day || day < yearAgo || day > today) return null;
 
-        return (
-          <div key={wi} className="grid grid-cols-[28px_repeat(7,1fr)] gap-1 mb-1">
-            <div className="flex items-center justify-end pr-1">
-              <span className="text-[10px] font-mono text-gray-400">{rowLabel}</span>
-            </div>
-            {week.map((day, di) => {
-              if (!day) {
-                return <div key={`empty-${wi}-${di}`} className="aspect-square" />;
-              }
+            const key = format(day, 'yyyy-MM-dd');
+            const pct = dataMap.get(key);
+            const intensity = getIntensity(pct);
+            const x = labelW + wi * (CELL + GAP);
+            const y = 14 + di * (CELL + GAP);
 
-              const key = format(day, 'yyyy-MM-dd');
-              const pct = dataMap.get(key);
-              const intensity = getIntensity(pct);
-              const isToday = format(today, 'yyyy-MM-dd') === key;
-              const isFuture = day > today;
-              const tooltip = `${format(day, 'MMM d')}: ${pct != null ? Math.round(pct * 100) + '%' : 'No activity'}`;
-
-              return (
-                <div
-                  key={key}
-                  title={tooltip}
-                  className={`aspect-square rounded-md ${
-                    isFuture
-                      ? 'bg-gray-50 dark:bg-gray-800/40'
-                      : intensityColors[intensity]
-                  } ${
-                    isToday ? 'ring-2 ring-primary-500 ring-offset-1 ring-offset-gray-50 dark:ring-offset-gray-800' : ''
-                  } transition-colors cursor-default`}
-                />
-              );
-            })}
-          </div>
-        );
-      })}
+            return (
+              <rect
+                key={key}
+                x={x}
+                y={y}
+                width={CELL}
+                height={CELL}
+                rx={2}
+                ry={2}
+                style={{ fill: getColorValue(intensity) }}
+              >
+                <title>{`${format(day, 'MMM d')}: ${pct != null ? Math.round(pct * 100) + '%' : 'No activity'}`}</title>
+              </rect>
+            );
+          })
+        )}
+      </svg>
 
       {/* Legend */}
-      <div className="flex items-center gap-1.5 mt-3 justify-end">
-        <span className="text-[10px] text-gray-400">Less</span>
-        {intensityColors.map((color, i) => (
-          <div key={i} className={`w-3 h-3 rounded-sm ${color}`} />
+      <div className="flex items-center gap-1 mt-2 justify-end">
+        <span className="text-[9px] text-gray-400">Less</span>
+        {intensityColors.map((_, i) => (
+          <svg key={i} width={10} height={10}>
+            <rect width={10} height={10} rx={2} ry={2} style={{ fill: getColorValue(i) }} />
+          </svg>
         ))}
-        <span className="text-[10px] text-gray-400">More</span>
+        <span className="text-[9px] text-gray-400">More</span>
       </div>
     </div>
   );
+}
+
+function isDark() {
+  return document.documentElement.classList.contains('dark');
+}
+
+function getColorValue(intensity) {
+  const light = [
+    '#E5E7EB', // gray-200
+    '#D1F7E0', // success-100
+    '#75E7A2', // success-300
+    '#4FDE86', // success-400
+    '#34C759', // success-500
+    '#28A745', // success-600
+  ];
+  if (isDark()) {
+    return [
+      '#374151', // gray-700
+      '#0A4717', // success-900
+      '#1E8735', // success-700
+      '#28A745', // success-600
+      '#34C759', // success-500
+      '#34C759', // success-500
+    ][intensity] || light[0];
+  }
+  return light[intensity] || light[0];
 }

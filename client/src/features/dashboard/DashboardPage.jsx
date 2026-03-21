@@ -179,7 +179,7 @@ export default function DashboardPage() {
   const insight = getInsight(user, completedToday, todaysRoutines.length, allDoneToday, stats, daysActiveThisWeek);
 
   return (
-    <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
+    <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 pt-8 pb-24">
       {/* Greeting */}
       <div data-tour="dash-greeting" className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">

@@ -40,7 +40,7 @@ export default function ProgressPage() {
   const maxXp = Math.max(...weekDays.map((d) => d.xp), 1);
 
   return (
-    <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
+    <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 pt-8 pb-24">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Progress</h1>
 
       {/* Key stats */}
@@ -73,7 +73,7 @@ export default function ProgressPage() {
       </div>
 
       {/* Heatmap */}
-      <Section title="Monthly Activity" right={format(new Date(), 'MMMM yyyy')}>
+      <Section title="Activity">
         <CalendarHeatmap data={stats?.heatmap || []} />
       </Section>
 
@@ -96,12 +96,12 @@ export default function ProgressPage() {
       <div data-tour="progress-streak">
       <Section title="Streak">
         <div className="flex items-center gap-6">
-          <div>
+          <div className="text-center">
             <p className="text-2xl font-mono font-bold text-gray-900 dark:text-white">{user.currentStreak}</p>
             <p className="text-xs text-gray-400">Current</p>
           </div>
           <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-          <div>
+          <div className="text-center">
             <p className="text-2xl font-mono font-bold text-gray-300 dark:text-gray-600">{user.longestStreak}</p>
             <p className="text-xs text-gray-400">Best</p>
           </div>

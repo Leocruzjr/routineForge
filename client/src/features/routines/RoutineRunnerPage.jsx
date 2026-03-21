@@ -123,7 +123,7 @@ export default function RoutineRunnerPage() {
   if (result) {
     const { xpBreakdown, leveledUp, newLevel, newTotalXp, streak } = result;
     return (
-      <PageWrapper className="max-w-lg mx-auto px-4 py-12 pb-24 text-center">
+      <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 py-12 pb-24 text-center">
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', damping: 20 }}>
           <div className="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center bg-primary-50 dark:bg-primary-900/20">
             {leveledUp
@@ -164,7 +164,7 @@ export default function RoutineRunnerPage() {
   const progress = steps.length > 0 ? ((currentStepIndex) / steps.length) * 100 : 0;
 
   return (
-    <PageWrapper className="max-w-lg mx-auto px-4 py-6 pb-24">
+    <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 py-6 pb-24">
       {/* Header with exit */}
       <div className="flex items-center justify-between mb-6">
         <button

@@ -248,7 +248,7 @@ export default function RoutineListPage() {
   };
 
   return (
-    <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
+    <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 pt-8 pb-24">
       <div data-tour="routines-header" className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Routines</h1>
         <div data-tour="routines-actions" className="flex gap-2">

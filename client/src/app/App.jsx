@@ -17,6 +17,7 @@ import SettingsPage from '@/features/settings/SettingsPage';
 import ResourcesPage from '@/features/resources/ResourcesPage';
 import OnboardingPage from '@/features/onboarding/OnboardingPage';
 import LevelUpTest from '@/features/settings/LevelUpTest';
+import HeatmapTest from '@/features/settings/HeatmapTest';
 
 function LoadingSpinner() {
   return (
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="/test/levelup" element={<ProtectedRoute><LevelUpTest /></ProtectedRoute>} />
+          <Route path="/test/heatmap" element={<ProtectedRoute><HeatmapTest /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

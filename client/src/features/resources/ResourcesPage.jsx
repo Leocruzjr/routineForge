@@ -67,7 +67,7 @@ export default function ResourcesPage() {
   const navigate = useNavigate();
 
   return (
-    <PageWrapper className="max-w-lg mx-auto px-4 pt-8 pb-24">
+    <PageWrapper className="max-w-lg md:max-w-3xl mx-auto px-4 pt-8 pb-24">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Resources</h1>
 
       {/* CTA to add a routine */}
